@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  login-postgres:
+    image: postgres:15-alpine
+    container_name: hrApplication-login
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+    ports:
+      - "5432:5432"
+    volumes:
+      - login-postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak  -d keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  hrapp-postgres:
+    image: postgres:15-alpine
+    container_name: hrApplication-db
+    environment:
+      POSTGRES_DB: hrApplication
+      POSTGRES_USER: hrApplication
+      POSTGRES_PASSWORD: hrApplication
+    ports:
+      - "5433:5432"  
+    volumes:
+      - hrapp-postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U hrApplication -d hrApplication" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  keycloak:
+    image: quay.io/keycloak/keycloak:22.0
+    container_name: keycloak
+    command:
+      - start-dev
+      - --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: login-postgres
+      KC_DB_URL_PORT: 5432
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_DB_USERNAME: keycloak
+      
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8082:8080"
+    depends_on:
+      - login-postgres
+    volumes:
+      - ./realm-export:/opt/keycloak/data/import
+
+volumes:
+  login-postgres_data:
+    driver: local
+  hrapp-postgres_data:
+    driver: local

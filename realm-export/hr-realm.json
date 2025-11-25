@@ -1,0 +1,46 @@
+{
+  "realm": "hr-realm",
+  "enabled": true,
+  "clients": [
+    {
+      "clientId": "hr-api-login",
+      "bearerOnly": false,
+      "publicClient": false,
+      "directAccessGrantsEnabled": true,
+      "secret": "my-login-secret"
+    },
+    {
+      "clientId": "hr-api",
+      "bearerOnly": true,
+      "directAccessGrantsEnabled": true,
+      "publicClient": false
+    }
+  ],
+  "roles": {
+    "realm": [
+        { "name": "MANAGER" },
+        { "name": "EMPLOYEE" },
+        { "name": "COWORKER" }
+    ]
+  },
+  "users": [
+    {
+      "username": "manager",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "1234" }],
+      "realmRoles": ["MANAGER"]
+    },
+    {
+      "username": "employee",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "1234" }],
+      "realmRoles": ["EMPLOYEE"]
+    },
+    {
+      "username": "coworker",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "1234" }],
+      "realmRoles": ["COWORKER"]
+    }
+  ]
+}

@@ -1,24 +1,250 @@
-# Compiled class file
+# hrApplication Spring Boot Application - .gitignore
+
+###################
+# Maven Build
+###################
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+###################
+# Java & Spring Boot
+###################
 *.class
-
-# Log file
-*.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
 *.jar
 *.war
-*.nar
 *.ear
 *.zip
 *.tar.gz
 *.rar
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Spring Boot
+spring-boot-*.log
+application-*.log
+
+###################
+# Database Files
+###################
+# H2 Database files (if using file-based H2)
+*.db
+*.trace.db
+*.lock.db
+*.mv.db
+
+# PostgreSQL dumps and backups
+*.sql.backup
+*.dump
+pg_dump_*
+
+# Database connection files with sensitive data
+database.properties
+db-credentials.properties
+
+###################
+# Docker & Compose
+###################
+# Docker Compose override files
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# Docker volumes (if locally mounted)
+/docker-volumes/
+/data/
+
+###################
+# Logs
+###################
+*.log
+/logs/
+/log/
+spring.log
+application.log
+
+###################
+# IDE Configuration
+###################
+
+# IntelliJ IDEA - SELECTIVE SHARING
+# INCLUDE these for team sharing (run configurations, compiler settings)
+!.idea/
+.idea/*
+!.idea/runConfigurations/
+!.idea/compiler.xml
+!.idea/encodings.xml
+!.idea/modules.xml
+!.idea/misc.xml
+!.idea/vcs.xml
+!.idea/inspectionProfiles/
+
+# EXCLUDE personal/machine-specific IDEA files
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries/
+.idea/shelf/
+.idea/libraries/
+.idea/sonarlint/
+.idea/sonarIssues.xml
+.idea/markdown-navigator/
+.idea/markdown-navigator.xml
+.idea/httpRequests/
+.idea/caches/
+.idea/dynamic.xml
+.idea/uiDesigner.xml
+.idea/gradle.xml
+.idea/jarRepositories.xml
+
+# IntelliJ IDEA module files that are auto-generated
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+
+###################
+# Testing & Reports
+###################
+# Postman test reports (auto-generated)
+postman/reports/
+postman/newman/
+postman/test-results.json
+
+# JUnit & Test reports
+TEST-*.xml
+test-output/
+coverage/
+.coverage
+
+# SonarQube
+.sonar/
+sonar-project.properties
+
+###################
+# Operating System
+###################
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.nfs*
+
+###################
+# Temporary Files
+###################
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.#*
+\#*#
+
+###################
+# Environment & Security
+###################
+# Environment files with sensitive data
+.env
+.env.local
+.env.production
+.env.staging
+
+# SSL certificates and keys
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.jks
+*.keystore
+
+# API keys and secrets
+secrets.properties
+api-keys.properties
+
+###################
+# Application Specific
+###################
+# Application-specific temporary files
+/uploads/
+/downloads/
+/temp/
+
+# Configuration overrides (if using local config files)
+application-local.properties
+application-dev-local.properties
+
+# Backup files
+*.bak
+*.backup
+
+###################
+# Archive & Package Files
+###################
+*.7z
+*.dmg
+*.gz
+*.iso
+*.tar
+*.zip
+
+###################
+# Documentation Build
+###################
+# If using documentation generators
+/docs/build/
+/docs/_build/
+
+###################
+# Node.js (if using frontend tools)
+###################
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.node_repl_history
+
+###################
+# Cache Directories
+###################
+.cache/
+cache/
+.pytest_cache/
