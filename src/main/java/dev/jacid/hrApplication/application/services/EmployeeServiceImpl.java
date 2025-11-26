@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 import dev.jacid.hrApplication.application.port.in.GetEmployeesUseCase;
 import dev.jacid.hrApplication.application.port.out.EmployeeRepository;
-import dev.jacid.hrApplication.domain.model.Employee;
+import dev.jacid.hrApplication.domain.model.dto.EmployeeDTO;
 
 @Service
 public class EmployeeServiceImpl implements GetEmployeesUseCase {
@@ -18,7 +18,7 @@ public class EmployeeServiceImpl implements GetEmployeesUseCase {
     }
     
     @Override
-    public List<Employee> getAllEmployees() {
+    public List<EmployeeDTO> getAllEmployees() {
         return employeeRepository.findAll();
     }
     

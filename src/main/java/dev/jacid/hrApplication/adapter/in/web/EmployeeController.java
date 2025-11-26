@@ -1,7 +1,7 @@
 package dev.jacid.hrApplication.adapter.in.web;
 
 import dev.jacid.hrApplication.application.port.in.GetEmployeesUseCase;
-import dev.jacid.hrApplication.domain.model.Employee;
+import dev.jacid.hrApplication.domain.model.dto.EmployeeDTO;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,8 +23,8 @@ public class EmployeeController {
     
     @GetMapping
     @PreAuthorize("hasRole('MANAGER')")
-    public ResponseEntity<List<Employee>> getAllEmployees() {
-        List<Employee> employees = getEmployeesUseCase.getAllEmployees();
+    public ResponseEntity<List<EmployeeDTO>> getAllEmployees() {
+        List<EmployeeDTO> employees = getEmployeesUseCase.getAllEmployees();
         return ResponseEntity.ok(employees);
     }
 }
