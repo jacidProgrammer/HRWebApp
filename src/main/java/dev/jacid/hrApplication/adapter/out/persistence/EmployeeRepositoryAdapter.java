@@ -10,7 +10,7 @@ import dev.jacid.hrApplication.application.port.out.EmployeeRepository;
 import dev.jacid.hrApplication.domain.model.dto.EmployeeDTO;
 
 @Repository
-@Profile("postgres")
+@Profile({"h2","postgres"})
 public class EmployeeRepositoryAdapter implements EmployeeRepository {
 
     private final EmployeeRepositoryJpa employeeRepositoryJpa;
