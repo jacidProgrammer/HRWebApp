@@ -126,9 +126,6 @@
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-                <includes>
-                    <include>application.properties</include>
-                </includes>
                 <filtering>false</filtering>
             </resource>
         </resources>
