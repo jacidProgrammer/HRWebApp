@@ -4,22 +4,66 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import dev.jacid.hrApplication.application.port.in.GetEmployeesUseCase;
+import dev.jacid.hrApplication.adapter.out.persistence.EmployeeJpaEntity;
+import dev.jacid.hrApplication.application.port.in.EmployeesUseCases;
 import dev.jacid.hrApplication.application.port.out.EmployeeRepository;
 import dev.jacid.hrApplication.domain.model.dto.EmployeeDTO;
+import dev.jacid.hrApplication.domain.model.dto.EmployeeMapper;
+import jakarta.transaction.Transactional;
 
 @Service
-public class EmployeeServiceImpl implements GetEmployeesUseCase {
+public class EmployeeServiceImpl implements EmployeesUseCases {
 
     private final EmployeeRepository employeeRepository;
+    private final EmployeeMapper employeeMapper;
 
-    public EmployeeServiceImpl(EmployeeRepository employeeRepository) {
+    public EmployeeServiceImpl(EmployeeRepository employeeRepository,
+                               EmployeeMapper employeeMapper) {
         this.employeeRepository = employeeRepository;
+        this.employeeMapper = employeeMapper;
     }
     
     @Override
     public List<EmployeeDTO> getAllEmployees() {
-        return employeeRepository.findAll();
+        return employeeRepository.findAll().stream().map(employeeMapper::toDto).toList();
     }
-    
+
+    public EmployeeDTO getEmployeeByName(String name) {
+        EmployeeJpaEntity employeeEntity = employeeRepository.findByName(name);
+        if(employeeEntity == null) {
+            throw new IllegalArgumentException("Employee with this name doesn't exist");
+        }
+        return employeeMapper.toDto(employeeEntity);
+    }
+
+    @Transactional
+    public EmployeeDTO createEmployee(EmployeeDTO employeeDTO) {
+        EmployeeJpaEntity employeeEntity = employeeRepository.findByName(employeeDTO.name());
+        if(employeeEntity != null) {
+            throw new IllegalArgumentException("Employee with this name already exists");
+        }
+        employeeRepository.save(employeeMapper.toEntity(employeeDTO));
+        return employeeDTO;
+    }
+
+    @Transactional
+    public EmployeeDTO updateEmployee(EmployeeDTO employeeDTO) {
+        EmployeeJpaEntity employeeEntity = employeeRepository.findByName(employeeDTO.name());
+        if(employeeEntity == null) {
+            throw new IllegalArgumentException("Employee with this name doesn't exist");
+        }
+        EmployeeJpaEntity newEntity = employeeMapper.toEntity(employeeDTO);
+        newEntity.setId(employeeEntity.getId());
+        employeeRepository.save(newEntity);
+        return employeeDTO;
+    }
+
+    @Transactional
+    public void deleteEmployeeByName(String name) {
+        EmployeeJpaEntity employeeEntity = employeeRepository.findByName(name);
+        if(employeeEntity == null) {
+            throw new IllegalArgumentException("Employee with this name doesn't exist");
+        }
+        employeeRepository.deleteByName(name);
+    }
 }

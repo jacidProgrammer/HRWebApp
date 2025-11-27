@@ -1,11 +1,16 @@
 package dev.jacid.hrApplication.adapter.in.web;
 
-import dev.jacid.hrApplication.application.port.in.GetEmployeesUseCase;
+import dev.jacid.hrApplication.application.port.in.EmployeesUseCases;
 import dev.jacid.hrApplication.domain.model.dto.EmployeeDTO;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,16 +20,40 @@ import java.util.List;
 @RequestMapping("/employees")
 public class EmployeeController {
     
-    private final GetEmployeesUseCase getEmployeesUseCase;
+    private final EmployeesUseCases employeesUseCases;
 
-    public EmployeeController(GetEmployeesUseCase getEmployeesUseCase) {
-        this.getEmployeesUseCase = getEmployeesUseCase;
+    public EmployeeController(EmployeesUseCases employeesUseCases) {
+        this.employeesUseCases = employeesUseCases;
     }
     
     @GetMapping
     @PreAuthorize("hasRole('MANAGER')")
-    public ResponseEntity<List<EmployeeDTO>> getAllEmployees() {
-        List<EmployeeDTO> employees = getEmployeesUseCase.getAllEmployees();
+    public ResponseEntity<List<EmployeeDTO>> getEmployees() {
+        List<EmployeeDTO> employees = employeesUseCases.getAllEmployees();
         return ResponseEntity.ok(employees);
+    }
+
+    @GetMapping("/{name}")
+    @PreAuthorize("hasRole('MANAGER')")
+    public EmployeeDTO getEmployeeByName(@PathVariable String name) {
+        return employeesUseCases.getEmployeeByName(name);
+    }
+
+    @PostMapping("")
+    @PreAuthorize("hasRole('MANAGER')")
+    public EmployeeDTO createEmployee(@RequestBody EmployeeDTO employeeDTO) {
+        return employeesUseCases.createEmployee(employeeDTO);
+    }
+
+    @PutMapping("")
+    @PreAuthorize("hasRole('MANAGER')")
+    public EmployeeDTO updateEmployee(@RequestBody EmployeeDTO employeeDTO) {
+        return employeesUseCases.updateEmployee(employeeDTO);
+    }
+
+    @DeleteMapping("/{name}")
+    @PreAuthorize("hasRole('MANAGER')")
+    public void deleteEmployee(@PathVariable String name) {
+        employeesUseCases.deleteEmployeeByName(name);
     }
 }
