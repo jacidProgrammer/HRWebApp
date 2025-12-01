@@ -19,8 +19,7 @@
   "roles": {
     "realm": [
         { "name": "MANAGER" },
-        { "name": "EMPLOYEE" },
-        { "name": "COWORKER" }
+        { "name": "EMPLOYEE" }
     ]
   },
   "users": [
@@ -35,12 +34,6 @@
       "enabled": true,
       "credentials": [{ "type": "password", "value": "1234" }],
       "realmRoles": ["EMPLOYEE"]
-    },
-    {
-      "username": "coworker",
-      "enabled": true,
-      "credentials": [{ "type": "password", "value": "1234" }],
-      "realmRoles": ["COWORKER"]
     }
   ]
 }

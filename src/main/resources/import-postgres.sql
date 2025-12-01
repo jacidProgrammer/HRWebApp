@@ -1,2 +1,2 @@
 -- Sample data for hrApplication application (PostgreSQL)
-INSERT INTO employees (id, name, department, role, email) VALUES (1,'Jose', 'IT', 'java Senior Backend', 'joseantoniocid.programmer@gmail.com');
+INSERT INTO employees (name, department, role, email, salary, address) VALUES ('Jose', 'IT', 'Java Senior Backend', 'joseantoniocid.programmer@gmail.com', 75600, 'Mainz, Germany');

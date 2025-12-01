@@ -29,14 +29,10 @@ public class EmployeeJpaEntity {
 
     @Column(nullable = false)
     private String email;
-    
-    public EmployeeJpaEntity() {}
 
-    public EmployeeJpaEntity(Long id, String name, String department, String role, String email) {
-        this.id = id;
-        this.name = name;
-        this.department = department;
-        this.role = role;
-        this.email = email;
-    }
+    @Column(nullable = false)
+    private Double salary;
+
+    @Column(nullable = false)
+    private String address;
 }

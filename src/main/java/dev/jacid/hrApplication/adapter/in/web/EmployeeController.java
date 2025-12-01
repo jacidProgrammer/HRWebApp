@@ -27,7 +27,7 @@ public class EmployeeController {
     }
     
     @GetMapping
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'EMPLOYEE')")
     public ResponseEntity<List<EmployeeDTO>> getEmployees() {
         List<EmployeeDTO> employees = employeesUseCases.getAllEmployees();
         return ResponseEntity.ok(employees);
@@ -45,8 +45,8 @@ public class EmployeeController {
         return employeesUseCases.createEmployee(employeeDTO);
     }
 
-    @PutMapping("")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PutMapping("/{name}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'EMPLOYEE')")
     public EmployeeDTO updateEmployee(@RequestBody EmployeeDTO employeeDTO) {
         return employeesUseCases.updateEmployee(employeeDTO);
     }

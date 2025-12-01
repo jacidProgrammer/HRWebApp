@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import dev.jacid.hrApplication.application.port.out.EmployeeRepository;
 
 @Repository
-@Profile({"h2","postgres"})
+@Profile({"h2","postgres","test"})
 public class EmployeeRepositoryAdapter implements EmployeeRepository {
 
     private final EmployeeRepositoryJpa employeeRepositoryJpa;
