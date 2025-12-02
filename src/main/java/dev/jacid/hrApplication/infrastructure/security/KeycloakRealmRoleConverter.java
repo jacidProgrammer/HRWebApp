@@ -1,4 +1,4 @@
-package dev.jacid.hrApplication.config;
+package dev.jacid.hrApplication.infrastructure.security;
 
 import java.util.Collection;
 import java.util.Collections;

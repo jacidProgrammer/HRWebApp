@@ -1,9 +1,11 @@
-package dev.jacid.hrApplication.domain.model.dto;
+package dev.jacid.hrApplication.application.mappers;
 
-import dev.jacid.hrApplication.adapter.out.persistence.EmployeeJpaEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
+
+import dev.jacid.hrApplication.adapter.out.persistence.EmployeeJpaEntity;
+import dev.jacid.hrApplication.domain.model.dto.EmployeeDTO;
 
 @Mapper(componentModel = "spring")
 public interface EmployeeMapper {

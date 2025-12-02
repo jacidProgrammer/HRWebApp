@@ -1,4 +1,4 @@
-package dev.jacid.hrApplication.adapter.in.web;
+package dev.jacid.hrApplication.adapter.in.http.controllers;
 
 import dev.jacid.hrApplication.application.port.in.EmployeesUseCases;
 import dev.jacid.hrApplication.domain.model.dto.EmployeeDTO;

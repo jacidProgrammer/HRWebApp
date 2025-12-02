@@ -1,4 +1,4 @@
-package dev.jacid.hrApplication.application.ErrorHandle;
+package dev.jacid.hrApplication.infrastructure.errorHandle;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,12 +18,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException ex) {
         ErrorResponse error = new ErrorResponse("INTERNAL_SERVER_ERROR", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
-        ErrorResponse error = new ErrorResponse("INTERNAL_SERVER_ERROR", "Unexpected error occurred");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 }

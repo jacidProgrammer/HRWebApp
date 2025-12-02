@@ -1,4 +1,4 @@
-package dev.jacid.hrApplication.adapter.in.web;
+package dev.jacid.hrApplication.adapter.in.http.controllers;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -33,7 +33,7 @@ import dev.jacid.hrApplication.domain.model.dto.EmployeeDTO;
 class EmployeeControllerTest {
 
     @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17")
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
             .withDatabaseName("HRAPI_test")
             .withUsername("admin")
             .withPassword("admin");

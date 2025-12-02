@@ -6,13 +6,13 @@ import org.springframework.stereotype.Service;
 
 import dev.jacid.hrApplication.adapter.out.persistence.EmployeeJpaEntity;
 import dev.jacid.hrApplication.adapter.out.persistence.FeedbackJpaEntity;
+import dev.jacid.hrApplication.application.mappers.FeedbackMapper;
 import dev.jacid.hrApplication.application.port.in.FeedbackUseCases;
 import dev.jacid.hrApplication.application.port.out.EmployeeRepository;
 import dev.jacid.hrApplication.application.port.out.FeedbackRepository;
-import dev.jacid.hrApplication.config.AuthenticatedUser;
+import dev.jacid.hrApplication.infrastructure.security.AuthenticatedUser;
 import dev.jacid.hrApplication.domain.model.dto.FeedbackDTO;
-import dev.jacid.hrApplication.domain.model.dto.FeedbackMapper;
-import dev.jacid.hrApplication.domain.model.dto.HuggingFaceResult;
+import dev.jacid.hrApplication.domain.model.dto.HuggingFaceResultDTO;
 import jakarta.transaction.Transactional;
 import reactor.core.publisher.Mono;
 
@@ -23,17 +23,17 @@ public class FeedbackServiceImpl implements FeedbackUseCases {
     private final FeedbackRepository feedbackRepository;
     private final FeedbackMapper feedbackMapper;
     private final AuthenticatedUser authenticatedUser;
-    private final HuggingFaceService huggingFaceService;
+    private final HuggingFaceServiceImpl huggingFaceServiceImpl;
 
     public FeedbackServiceImpl(EmployeeRepository employeeRepository,
                                FeedbackRepository feedbackRepository,
                                FeedbackMapper feedbackMapper,
-                               HuggingFaceService huggingFaceService,
+                               HuggingFaceServiceImpl huggingFaceServiceImpl,
                                AuthenticatedUser auth) {
         this.employeeRepository = employeeRepository;
         this.feedbackRepository = feedbackRepository;
         this.feedbackMapper = feedbackMapper;
-        this.huggingFaceService = huggingFaceService;
+        this.huggingFaceServiceImpl = huggingFaceServiceImpl;
         this.authenticatedUser = auth;
     }
     
@@ -68,10 +68,10 @@ public class FeedbackServiceImpl implements FeedbackUseCases {
         feedbackJpaEntity.setReporter(reporter);
         feedbackJpaEntity.setEmployee(employeeJpaEntity);
 
-        Mono<List<HuggingFaceResult>> result = huggingFaceService.analyzeSentiment(feedbackDTO.message());
+        Mono<List<HuggingFaceResultDTO>> result = huggingFaceServiceImpl.analyzeSentiment(feedbackDTO.message());
         if(result != null) {
             result.blockOptional().stream().findFirst().ifPresent(huggingFaceResult -> {
-                HuggingFaceResult response = huggingFaceResult.getFirst();
+                HuggingFaceResultDTO response = huggingFaceResult.getFirst();
                 feedbackJpaEntity.setLabel(response.label());
                 feedbackJpaEntity.setScore(response.score());
             });

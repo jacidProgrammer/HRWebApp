@@ -1,10 +1,11 @@
-package dev.jacid.hrApplication.domain.model.dto;
+package dev.jacid.hrApplication.application.mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
 import dev.jacid.hrApplication.adapter.out.persistence.FeedbackJpaEntity;
+import dev.jacid.hrApplication.domain.model.dto.FeedbackDTO;
 
 @Mapper(componentModel = "spring")
 public interface FeedbackMapper {

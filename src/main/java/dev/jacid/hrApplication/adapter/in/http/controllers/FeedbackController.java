@@ -1,4 +1,4 @@
-package dev.jacid.hrApplication.adapter.in.web;
+package dev.jacid.hrApplication.adapter.in.http.controllers;
 
 import java.util.List;
 

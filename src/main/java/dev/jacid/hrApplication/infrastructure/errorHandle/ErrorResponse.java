@@ -1,4 +1,4 @@
-package dev.jacid.hrApplication.application.ErrorHandle;
+package dev.jacid.hrApplication.infrastructure.errorHandle;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,4 +1,4 @@
-package dev.jacid.hrApplication.config;
+package dev.jacid.hrApplication.infrastructure.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,6 +8,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+
+import dev.jacid.hrApplication.infrastructure.security.KeycloakRealmRoleConverter;
 
 @Configuration
 @EnableMethodSecurity

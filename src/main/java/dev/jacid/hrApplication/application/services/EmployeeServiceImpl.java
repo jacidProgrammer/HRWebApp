@@ -5,11 +5,11 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import dev.jacid.hrApplication.adapter.out.persistence.EmployeeJpaEntity;
+import dev.jacid.hrApplication.application.mappers.EmployeeMapper;
 import dev.jacid.hrApplication.application.port.in.EmployeesUseCases;
 import dev.jacid.hrApplication.application.port.out.EmployeeRepository;
-import dev.jacid.hrApplication.config.AuthenticatedUser;
+import dev.jacid.hrApplication.infrastructure.security.AuthenticatedUser;
 import dev.jacid.hrApplication.domain.model.dto.EmployeeDTO;
-import dev.jacid.hrApplication.domain.model.dto.EmployeeMapper;
 import jakarta.transaction.Transactional;
 
 @Service

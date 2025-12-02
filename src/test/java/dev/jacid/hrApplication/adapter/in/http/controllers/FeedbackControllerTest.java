@@ -1,4 +1,4 @@
-package dev.jacid.hrApplication.adapter.in.web;
+package dev.jacid.hrApplication.adapter.in.http.controllers;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -30,9 +30,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import dev.jacid.hrApplication.application.services.HuggingFaceService;
+import dev.jacid.hrApplication.application.services.HuggingFaceServiceImpl;
 import dev.jacid.hrApplication.domain.model.dto.FeedbackDTO;
-import dev.jacid.hrApplication.domain.model.dto.HuggingFaceResult;
+import dev.jacid.hrApplication.domain.model.dto.HuggingFaceResultDTO;
 import reactor.core.publisher.Mono;
 
 @SpringBootTest
@@ -51,7 +51,7 @@ class FeedbackControllerTest {
     private MockMvc mockMvc;
     
     @MockBean
-    private HuggingFaceService huggingFaceService;
+    private HuggingFaceServiceImpl huggingFaceServiceImpl;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -110,8 +110,8 @@ class FeedbackControllerTest {
     @Test
     @WithMockUser(username = "Louisa", roles = "EMPLOYEE")
     void sendFeedbackSuccesfully() throws Exception {
-        List<HuggingFaceResult> sentiment = List.of(new HuggingFaceResult("POSITIVE", 0.98));
-        given(huggingFaceService.analyzeSentiment(anyString()))
+        List<HuggingFaceResultDTO> sentiment = List.of(new HuggingFaceResultDTO("POSITIVE", 0.98));
+        given(huggingFaceServiceImpl.analyzeSentiment(anyString()))
                 .willReturn(Mono.just(sentiment));
         // Create a new feedback
         FeedbackDTO feedback = new FeedbackDTO("Jose", "Great work environment and team spirit.");

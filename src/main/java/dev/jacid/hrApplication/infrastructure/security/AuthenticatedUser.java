@@ -1,4 +1,4 @@
-package dev.jacid.hrApplication.config;
+package dev.jacid.hrApplication.infrastructure.security;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;

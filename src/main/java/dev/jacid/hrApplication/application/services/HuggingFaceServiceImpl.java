@@ -7,16 +7,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import dev.jacid.hrApplication.domain.model.dto.HuggingFaceResult;
+import dev.jacid.hrApplication.domain.model.dto.HuggingFaceResultDTO;
 import reactor.core.publisher.Mono;
 
 @Service
-public class HuggingFaceService {
+public class HuggingFaceServiceImpl {
 
     private final WebClient client;
     private final String model;
 
-    public HuggingFaceService(
+    public HuggingFaceServiceImpl(
             @Value("${huggingface.token}") String token,
             @Value("${huggingface.model}") String model
     ) {
@@ -27,12 +27,12 @@ public class HuggingFaceService {
                 .build();
     }
 
-    public Mono<List<HuggingFaceResult>> analyzeSentiment(String text) {
+    public Mono<List<HuggingFaceResultDTO>> analyzeSentiment(String text) {
         return client.post()
                 .uri("/" + model)
                 .bodyValue(Map.of("inputs", text))
                 .retrieve()
-                .bodyToFlux(HuggingFaceResult.class)  
+                .bodyToFlux(HuggingFaceResultDTO.class)  
                 .collectSortedList();
     }
 }
