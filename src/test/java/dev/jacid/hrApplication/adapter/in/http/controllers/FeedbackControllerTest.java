@@ -110,7 +110,7 @@ class FeedbackControllerTest {
     @Test
     @WithMockUser(username = "Louisa", roles = "EMPLOYEE")
     void sendFeedbackSuccesfully() throws Exception {
-        List<HuggingFaceResultDTO> sentiment = List.of(new HuggingFaceResultDTO("POSITIVE", 0.98));
+        HuggingFaceResultDTO sentiment = new HuggingFaceResultDTO("POSITIVE", 0.98);
         given(huggingFaceServiceImpl.analyzeSentiment(anyString()))
                 .willReturn(Mono.just(sentiment));
         // Create a new feedback
@@ -127,6 +127,9 @@ class FeedbackControllerTest {
     @Test
     @WithMockUser(username = "Louisa", roles = "EMPLOYEE")
     void sendFeedbackSuccesfullyWhenNotReachingHuggingFaceAPI() throws Exception {
+        HuggingFaceResultDTO sentiment = new HuggingFaceResultDTO(null, null);
+        given(huggingFaceServiceImpl.analyzeSentiment(anyString()))
+                .willReturn(Mono.just(sentiment));
         // Create a new feedback
         FeedbackDTO feedback = new FeedbackDTO("Jose", "Great work environment and team spirit.");
         mockMvc.perform(post("/feedback")

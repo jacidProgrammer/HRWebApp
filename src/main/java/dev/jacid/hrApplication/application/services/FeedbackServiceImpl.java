@@ -70,7 +70,7 @@ public class FeedbackServiceImpl implements FeedbackUseCases {
 
         HuggingFaceResultDTO predictions =
                 huggingFaceServiceImpl.analyzeSentiment(feedbackDTO.message())
-                        .blockOptional().orElseThrow(() -> new IllegalStateException("HuggingFace returned no predictions"));
+                        .blockOptional().orElse(new HuggingFaceResultDTO(null, null));
 
         feedbackJpaEntity.setLabel(predictions.label());
         feedbackJpaEntity.setScore(predictions.score());

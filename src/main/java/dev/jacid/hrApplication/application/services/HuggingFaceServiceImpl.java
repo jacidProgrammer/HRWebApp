@@ -1,5 +1,7 @@
 package dev.jacid.hrApplication.application.services;
 
+import static org.springframework.validation.method.MethodValidationResult.emptyResult;
+
 import java.util.List;
 import java.util.Map;
 
@@ -56,7 +58,8 @@ public class HuggingFaceServiceImpl {
                         return null;
                     }
                     return innerList.get(0); // First element with bigger score
-                });
+                })
+                .onErrorReturn(new HuggingFaceResultDTO(null, null));
     }
 
 }

@@ -37,7 +37,7 @@ public class EmployeeServiceImpl implements EmployeesUseCases {
     }
 
     private boolean hasPermissionToViewOrEditThisProfile(String employeeName) {
-        return auth.isEmployee() && employeeName.toLowerCase().equals(auth.getUserName());
+        return auth.isEmployee() && employeeName.equalsIgnoreCase(auth.getUserName());
     }
     
     private List<EmployeeDTO> filterSensitiveData(List<EmployeeJpaEntity> employeeList) {
