@@ -5,6 +5,6 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface EmployeeRepositoryJpa extends JpaRepository<EmployeeJpaEntity, Long> {
-    Optional<EmployeeJpaEntity> findByName(String name);
+    Optional<EmployeeJpaEntity> findByNameIgnoreCase(String name);
     void deleteByName(String name);
 }

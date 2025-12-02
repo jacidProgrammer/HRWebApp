@@ -24,7 +24,7 @@ public class EmployeeRepositoryAdapter implements EmployeeRepository {
 
     @Override
     public EmployeeJpaEntity findByName(String name) {
-        return employeeRepositoryJpa.findByName(name).orElse(null);
+        return employeeRepositoryJpa.findByNameIgnoreCase(name).orElse(null);
     }
 
     @Override

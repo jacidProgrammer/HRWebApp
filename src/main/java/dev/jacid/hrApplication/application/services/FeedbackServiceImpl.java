@@ -68,15 +68,13 @@ public class FeedbackServiceImpl implements FeedbackUseCases {
         feedbackJpaEntity.setReporter(reporter);
         feedbackJpaEntity.setEmployee(employeeJpaEntity);
 
-        Mono<List<HuggingFaceResultDTO>> result = huggingFaceServiceImpl.analyzeSentiment(feedbackDTO.message());
-        if(result != null) {
-            result.blockOptional().stream().findFirst().ifPresent(huggingFaceResult -> {
-                HuggingFaceResultDTO response = huggingFaceResult.getFirst();
-                feedbackJpaEntity.setLabel(response.label());
-                feedbackJpaEntity.setScore(response.score());
-            });
-        }
-        
+        HuggingFaceResultDTO predictions =
+                huggingFaceServiceImpl.analyzeSentiment(feedbackDTO.message())
+                        .blockOptional().orElseThrow(() -> new IllegalStateException("HuggingFace returned no predictions"));
+
+        feedbackJpaEntity.setLabel(predictions.label());
+        feedbackJpaEntity.setScore(predictions.score());
+
         feedbackRepository.save(feedbackJpaEntity);
         return feedbackMapper.toDto(feedbackJpaEntity);
     }
