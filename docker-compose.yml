@@ -126,7 +126,7 @@ services:
   # ---- profile "observability": Prometheus and Grafana (scrape the api service of the "full" profile) ----
   prometheus:
     profiles: [observability]
-    image: prom/prometheus:v3.5.0
+    image: prom/prometheus:v3.14.0
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.retention.time=7d
@@ -137,7 +137,7 @@ services:
 
   grafana:
     profiles: [observability]
-    image: grafana/grafana:12.1.1
+    image: grafana/grafana:13.2.2
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
