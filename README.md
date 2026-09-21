@@ -6,7 +6,8 @@ A small HR backend built with Spring Boot and a hexagonal (ports and adapters) a
 It manages employees and peer feedback, secures every endpoint with Keycloak-issued JWTs and
 enriches feedback with an AI sentiment score from the Hugging Face inference API.
 
-The React frontend lives in a separate repository: [HRWebApp-UI](https://github.com/jacidProgrammer/HRWebApp-UI).
+The React frontend lives in a separate repository: [HRWebApp-UI](https://github.com/jacidProgrammer/HRWebApp-UI)
+(Keycloak login with PKCE, role-aware employee directory, profile editing and feedback with sentiment badges).
 
 ## Features
 
@@ -79,10 +80,25 @@ Requirements: JDK 21 and Docker. Maven is provided by the wrapper (`./mvnw`).
 
    This starts Keycloak on `http://localhost:8082` (admin console: `admin` / `admin`), its own
    PostgreSQL, and the application database on port `5433`. Keycloak imports the `hr-realm` realm
-   from [`realm-export/hr-realm.json`](realm-export/hr-realm.json) on startup. The realm defines the
-   roles `MANAGER` and `EMPLOYEE` and the demo users `manager` and `Jose`.
+   from [`realm-export/hr-realm.json`](realm-export/hr-realm.json) on startup. The realm defines:
 
-   > The client secret, user passwords and admin credentials in `docker-compose.yml`, the realm
+   - the realm roles `MANAGER` and `EMPLOYEE`, which reach the API in the token's `realm_access.roles` claim;
+   - the public client `hr-api-login`: authorization code flow with PKCE (S256) for the
+     [HRWebApp-UI](https://github.com/jacidProgrammer/HRWebApp-UI) single-page app (redirect URIs
+     `http://localhost:5173/*`, web origin `http://localhost:5173`), plus the password grant used by the
+     Postman collection;
+   - the demo users (password `1234` for all of them):
+
+     | User      | Role       | Employee record |
+     |-----------|------------|-----------------|
+     | `manager` | `MANAGER`  | none            |
+     | `Jose`    | `EMPLOYEE` | `Jose`          |
+     | `Louisa`  | `EMPLOYEE` | `Louisa`        |
+
+   Keycloak only imports the realm when it does not exist yet. After the realm file changes, recreate its
+   database with `docker compose down -v && docker compose up -d`.
+
+   > The user passwords and admin credentials in `docker-compose.yml`, the realm
    > export and the Postman collection are **demo values for local development only**. Replace them
    > before running this anywhere else.
 
@@ -109,6 +125,16 @@ Requirements: JDK 21 and Docker. Maven is provided by the wrapper (`./mvnw`).
    [`src/main/resources/HR.postman_collection.json`](src/main/resources/HR.postman_collection.json)
    into Postman, send the `Token` request (password grant against `hr-realm`), and use the returned
    `access_token` as Bearer token for the other requests.
+
+5. **(Optional) Run the frontend.** Follow the [HRWebApp-UI README](https://github.com/jacidProgrammer/HRWebApp-UI#running-it-with-the-backend):
+   `npm install && npm run dev` serves it on `http://localhost:5173` and signs you in through Keycloak.
+
+   Browsers may only call the API from allowed origins. CORS is configured with `app.cors.allowed-origins`
+   (a comma-separated list, default `http://localhost:5173`), which you can override with an environment variable:
+
+   ```bash
+   CORS_ALLOWED_ORIGINS=https://hr.example.com,http://localhost:5173 ./mvnw spring-boot:run
+   ```
 
 ## API overview
 

@@ -162,11 +162,6 @@
 							"type": "text"
 						},
 						{
-							"key": "client_secret",
-							"value": "my-login-secret",
-							"type": "text"
-						},
-						{
 							"key": "username",
 							"value": "Jose",
 							"type": "text"

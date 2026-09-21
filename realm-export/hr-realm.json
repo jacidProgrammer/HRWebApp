@@ -1,13 +1,29 @@
 {
   "realm": "hr-realm",
   "enabled": true,
+  "sslRequired": "external",
   "clients": [
     {
       "clientId": "hr-api-login",
+      "name": "HRWebApp UI",
+      "description": "Public client used by the HRWebApp-UI single-page app (authorization code + PKCE) and, for local testing, by the Postman collection (password grant).",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
       "bearerOnly": false,
-      "publicClient": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": true,
-      "secret": "my-login-secret"
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": true,
+      "rootUrl": "http://localhost:5173",
+      "baseUrl": "/",
+      "redirectUris": ["http://localhost:5173/*"],
+      "webOrigins": ["http://localhost:5173"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*"
+      }
     },
     {
       "clientId": "hr-api",
@@ -26,12 +42,30 @@
     {
       "username": "manager",
       "enabled": true,
+      "firstName": "Demo",
+      "lastName": "Manager",
+      "email": "manager@example.com",
+      "emailVerified": true,
       "credentials": [{ "type": "password", "value": "1234" }],
       "realmRoles": ["MANAGER"]
     },
     {
       "username": "Jose",
       "enabled": true,
+      "firstName": "Jose",
+      "lastName": "Demo",
+      "email": "jose@example.com",
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "1234" }],
+      "realmRoles": ["EMPLOYEE"]
+    },
+    {
+      "username": "Louisa",
+      "enabled": true,
+      "firstName": "Louisa",
+      "lastName": "Demo",
+      "email": "louisa@example.com",
+      "emailVerified": true,
       "credentials": [{ "type": "password", "value": "1234" }],
       "realmRoles": ["EMPLOYEE"]
     }
