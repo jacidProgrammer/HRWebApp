@@ -46,27 +46,47 @@
       "lastName": "Manager",
       "email": "manager@example.com",
       "emailVerified": true,
-      "credentials": [{ "type": "password", "value": "1234" }],
+      "credentials": [{ "type": "password", "value": "1234", "temporary": false }],
       "realmRoles": ["MANAGER"]
     },
     {
-      "username": "Jose",
+      "username": "jose",
       "enabled": true,
-      "firstName": "Jose",
-      "lastName": "Demo",
+      "firstName": "José Antonio",
+      "lastName": "Cid",
       "email": "jose@example.com",
       "emailVerified": true,
-      "credentials": [{ "type": "password", "value": "1234" }],
+      "credentials": [{ "type": "password", "value": "1234", "temporary": false }],
       "realmRoles": ["EMPLOYEE"]
     },
     {
-      "username": "Louisa",
+      "username": "louisa",
       "enabled": true,
       "firstName": "Louisa",
-      "lastName": "Demo",
+      "lastName": "Becker",
       "email": "louisa@example.com",
       "emailVerified": true,
-      "credentials": [{ "type": "password", "value": "1234" }],
+      "credentials": [{ "type": "password", "value": "1234", "temporary": false }],
+      "realmRoles": ["EMPLOYEE"]
+    },
+    {
+      "username": "maria",
+      "enabled": true,
+      "firstName": "María",
+      "lastName": "García",
+      "email": "maria@example.com",
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "1234", "temporary": false }],
+      "realmRoles": ["EMPLOYEE"]
+    },
+    {
+      "username": "lukas",
+      "enabled": true,
+      "firstName": "Lukas",
+      "lastName": "Schneider",
+      "email": "lukas@example.com",
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "1234", "temporary": false }],
       "realmRoles": ["EMPLOYEE"]
     }
   ]

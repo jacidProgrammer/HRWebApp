@@ -9,8 +9,9 @@ import dev.jacid.hrApplication.domain.model.Feedback;
 @Mapper(componentModel = "spring")
 public interface FeedbackDtoMapper {
 
-    @Mapping(target = "name", source = "employee.name")
-    @Mapping(target = "score", source = "sentiment.score")
-    @Mapping(target = "label", source = "sentiment.label")
+    @Mapping(target = "recipientId", source = "recipient.id")
+    @Mapping(target = "recipientName", source = "recipient.name")
+    @Mapping(target = "authorId", source = "author.id")
+    @Mapping(target = "authorName", source = "author.name")
     FeedbackDTO toDto(Feedback feedback);
 }

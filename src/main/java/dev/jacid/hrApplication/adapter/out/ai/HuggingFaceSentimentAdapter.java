@@ -1,6 +1,7 @@
 package dev.jacid.hrApplication.adapter.out.ai;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -13,6 +14,7 @@ import org.springframework.web.client.RestClient;
 
 import dev.jacid.hrApplication.application.port.out.SentimentAnalyzer;
 import dev.jacid.hrApplication.domain.model.Sentiment;
+import dev.jacid.hrApplication.domain.model.SentimentLabel;
 
 /**
  * {@link SentimentAnalyzer} backed by the Hugging Face inference API.
@@ -39,6 +41,11 @@ public class HuggingFaceSentimentAdapter implements SentimentAnalyzer {
     }
 
     @Override
+    public boolean isAvailable() {
+        return properties.hasToken();
+    }
+
+    @Override
     public Optional<Sentiment> analyze(String text) {
         if (!properties.hasToken()) {
             return Optional.empty();
@@ -58,11 +65,34 @@ public class HuggingFaceSentimentAdapter implements SentimentAnalyzer {
     }
 
     /** The API returns one list per input, sorted by descending score; the first entry is the predicted label. */
-    private static Optional<Sentiment> firstPrediction(List<List<HuggingFacePrediction>> response) {
+    private Optional<Sentiment> firstPrediction(List<List<HuggingFacePrediction>> response) {
         if (response == null || response.isEmpty() || response.get(0) == null || response.get(0).isEmpty()) {
             return Optional.empty();
         }
         HuggingFacePrediction best = response.get(0).get(0);
-        return best == null ? Optional.empty() : Optional.of(new Sentiment(best.label(), best.score()));
+        if (best == null || best.score() == null) {
+            return Optional.empty();
+        }
+        Optional<SentimentLabel> label = toLabel(best.label());
+        if (label.isEmpty()) {
+            log.warn("Unknown sentiment label '{}' from model {}, storing feedback without sentiment", best.label(), properties.model());
+        }
+        return label.map(value -> new Sentiment(value, best.score()));
+    }
+
+    /**
+     * Models name their labels differently: {@code positive}/{@code POSITIVE}, or {@code LABEL_0..2}
+     * (negative, neutral, positive) for the three-class models without label names.
+     */
+    static Optional<SentimentLabel> toLabel(String label) {
+        if (label == null) {
+            return Optional.empty();
+        }
+        return switch (label.strip().toUpperCase(Locale.ROOT)) {
+            case "LABEL_0" -> Optional.of(SentimentLabel.NEGATIVE);
+            case "LABEL_1" -> Optional.of(SentimentLabel.NEUTRAL);
+            case "LABEL_2" -> Optional.of(SentimentLabel.POSITIVE);
+            default -> SentimentLabel.fromName(label);
+        };
     }
 }

@@ -13,17 +13,17 @@ public interface FeedbackPersistenceMapper {
     @Mapping(target = "sentiment", source = "entity")
     Feedback toDomain(FeedbackJpaEntity entity);
 
-    /** Employee and reporter are resolved by the adapter as JPA references, so they are not mapped here. */
-    @Mapping(target = "employee", ignore = true)
-    @Mapping(target = "reporter", ignore = true)
-    @Mapping(target = "label", source = "sentiment.label")
-    @Mapping(target = "score", source = "sentiment.score")
+    /** Recipient and author are resolved by the adapter as JPA references, so they are not mapped here. */
+    @Mapping(target = "recipient", ignore = true)
+    @Mapping(target = "author", ignore = true)
+    @Mapping(target = "sentimentLabel", source = "sentiment.label")
+    @Mapping(target = "sentimentScore", source = "sentiment.score")
     FeedbackJpaEntity toEntity(Feedback feedback);
 
     default Sentiment toSentiment(FeedbackJpaEntity entity) {
-        if (entity.getLabel() == null && entity.getScore() == null) {
+        if (entity.getSentimentLabel() == null) {
             return null;
         }
-        return new Sentiment(entity.getLabel(), entity.getScore());
+        return new Sentiment(entity.getSentimentLabel(), entity.getSentimentScore() == null ? 0 : entity.getSentimentScore());
     }
 }

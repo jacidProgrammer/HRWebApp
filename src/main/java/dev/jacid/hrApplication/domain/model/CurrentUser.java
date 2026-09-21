@@ -2,7 +2,7 @@ package dev.jacid.hrApplication.domain.model;
 
 import java.util.Set;
 
-/** The user performing the current request: their login name and business roles. */
+/** The user performing the current request: their login name (Keycloak {@code preferred_username}) and roles. */
 public record CurrentUser(String username, Set<Role> roles) {
 
     public CurrentUser {
@@ -21,8 +21,8 @@ public record CurrentUser(String username, Set<Role> roles) {
         return roles.contains(Role.EMPLOYEE);
     }
 
-    /** Whether this user is the employee with the given name (names are compared ignoring case). */
-    public boolean isEmployeeNamed(String employeeName) {
-        return isEmployee() && username != null && username.equalsIgnoreCase(employeeName);
+    /** Whether the given employee record is linked to this user (usernames are compared ignoring case). */
+    public boolean owns(Employee employee) {
+        return employee != null && employee.isLinkedTo(username);
     }
 }

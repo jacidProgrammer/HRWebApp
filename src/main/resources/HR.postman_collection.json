@@ -7,132 +7,6 @@
 	},
 	"item": [
 		{
-			"name": "Employees",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJZVng2cVBQNXdLdDFXczZNZmlKWFZXdHNGaU54cWl1aHNLR0JyaDdmbnNBIn0.eyJleHAiOjE3NjQ2ODgxNzksImlhdCI6MTc2NDY4Nzg3OSwianRpIjoiNWU2ZTZmYzMtMWQ1NS00NzljLTg1NDUtNWUwYjhhZjQ4ZTk0IiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgyL3JlYWxtcy9oci1yZWFsbSIsInN1YiI6ImNiYzU5MDVhLWFiMmYtNDk2Ni1iZDQwLThhN2RhMWU4NzczMiIsInR5cCI6IkJlYXJlciIsImF6cCI6ImhyLWFwaS1sb2dpbiIsInNlc3Npb25fc3RhdGUiOiIyYTRiYzQ5OS0wNDUyLTQwMDItYjc4MC05NGRjZDY5ODU4YmMiLCJhY3IiOiIxIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIkVNUExPWUVFIl19LCJzY29wZSI6InByb2ZpbGUgZW1haWwiLCJzaWQiOiIyYTRiYzQ5OS0wNDUyLTQwMDItYjc4MC05NGRjZDY5ODU4YmMiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsInByZWZlcnJlZF91c2VybmFtZSI6Impvc2UifQ.Gvil0sGm696tml-R3p9UFcyAjp10zU7-SeXSyemW0p2O4f5_Xmrx-iLnkN0Cjg_nhbnlChMNRw6FvaTanPMad0OWxZ_BBBNgTRowbUv7lj0UpyaYuBMjH6CatgXYlMisRJCrxCcc2J_YPgmzUeiJrp9JTUt1XC_GJpaefEtSU8Mt-3wY71j7iBzcr01VMUj9WMDhJunJ9evFShdHZzSG9HWxns-SnJyNYh0DNO17qUnrnjr50wuLjRcOKSQNFqXoTr155ab4ibmcoCjuF5HpHVcPOuRI-76tOD5yT2qaqB_WKmMeWh-syjlErQz0PR65Mlbvel93KYYm2m1ZLZDJEQ",
-							"type": "string"
-						}
-					]
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost:8080/employees",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"employees"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Employees By Name",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICIxdXZhUWdkS2JFZnM2WndWcl9IeHY5bWdGeGtEUzV1bEgyUURJZEtuMUFZIn0.eyJleHAiOjE3NjQyMzEyMTUsImlhdCI6MTc2NDIzMDkxNSwianRpIjoiYzYyZGNhYzQtYTNmZS00MTQxLWIyNjctMjMxMzQxMzVmYjg3IiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgyL3JlYWxtcy9oci1yZWFsbSIsInN1YiI6IjM3YjU3MjM4LTQ2ZWEtNDY3MC1iN2RkLTY1MzE5NjNhYWIzZCIsInR5cCI6IkJlYXJlciIsImF6cCI6ImhyLWFwaS1sb2dpbiIsInNlc3Npb25fc3RhdGUiOiI2N2FjYzYzOS1iNGZhLTRlMTYtODAxOC05YjJiYzFkMTIwYTEiLCJhY3IiOiIxIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIk1BTkFHRVIiXX0sInNjb3BlIjoicHJvZmlsZSBlbWFpbCIsInNpZCI6IjY3YWNjNjM5LWI0ZmEtNGUxNi04MDE4LTliMmJjMWQxMjBhMSIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwicHJlZmVycmVkX3VzZXJuYW1lIjoibWFuYWdlciJ9.kar8kmFyX7IfSb9wc9QApzqADDjbiQQO7-9fsz0ZoPTse_bWxqY0mbafaYtWr3iwZ4JWY8BAhSs-FNdeVjwp_xMMgMd6CZEhzqNaWDGyPULvF3XTIIb-SIFpymPM1NbJHGd-VtN34UvK2EXrpV4Uh6vnGLvY1IqVRtXDaS7kjmBAWQEPvvw46xk1dDEpe2uc4pGXk8WYX5YNatAuZ-uDzJJ2iGPtewMiHExVSzD9LJZEIAM0i82fuQKjS6GQKk8oqfOqC-KkB2mlRnCrmFeixhqrtPu076d2OgOwr718cSmpoVekGj4aU29SNBajo8Uawr68dAfP3XyBkCmZzKTOVQ",
-							"type": "string"
-						}
-					]
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost:8080/employees/Jose",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"employees",
-						"Jose"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Feedback",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJZVng2cVBQNXdLdDFXczZNZmlKWFZXdHNGaU54cWl1aHNLR0JyaDdmbnNBIn0.eyJleHAiOjE3NjQ2ODgxNzksImlhdCI6MTc2NDY4Nzg3OSwianRpIjoiNWU2ZTZmYzMtMWQ1NS00NzljLTg1NDUtNWUwYjhhZjQ4ZTk0IiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgyL3JlYWxtcy9oci1yZWFsbSIsInN1YiI6ImNiYzU5MDVhLWFiMmYtNDk2Ni1iZDQwLThhN2RhMWU4NzczMiIsInR5cCI6IkJlYXJlciIsImF6cCI6ImhyLWFwaS1sb2dpbiIsInNlc3Npb25fc3RhdGUiOiIyYTRiYzQ5OS0wNDUyLTQwMDItYjc4MC05NGRjZDY5ODU4YmMiLCJhY3IiOiIxIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIkVNUExPWUVFIl19LCJzY29wZSI6InByb2ZpbGUgZW1haWwiLCJzaWQiOiIyYTRiYzQ5OS0wNDUyLTQwMDItYjc4MC05NGRjZDY5ODU4YmMiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsInByZWZlcnJlZF91c2VybmFtZSI6Impvc2UifQ.Gvil0sGm696tml-R3p9UFcyAjp10zU7-SeXSyemW0p2O4f5_Xmrx-iLnkN0Cjg_nhbnlChMNRw6FvaTanPMad0OWxZ_BBBNgTRowbUv7lj0UpyaYuBMjH6CatgXYlMisRJCrxCcc2J_YPgmzUeiJrp9JTUt1XC_GJpaefEtSU8Mt-3wY71j7iBzcr01VMUj9WMDhJunJ9evFShdHZzSG9HWxns-SnJyNYh0DNO17qUnrnjr50wuLjRcOKSQNFqXoTr155ab4ibmcoCjuF5HpHVcPOuRI-76tOD5yT2qaqB_WKmMeWh-syjlErQz0PR65Mlbvel93KYYm2m1ZLZDJEQ",
-							"type": "string"
-						}
-					]
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost:8080/feedback",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"feedback"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Send feedback",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJZVng2cVBQNXdLdDFXczZNZmlKWFZXdHNGaU54cWl1aHNLR0JyaDdmbnNBIn0.eyJleHAiOjE3NjQ2OTI0ODAsImlhdCI6MTc2NDY5MjE4MCwianRpIjoiZGQwM2U1ZmUtZTQzMy00MTdiLThjMzMtMGFmM2E2NTgxMDIzIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgyL3JlYWxtcy9oci1yZWFsbSIsInN1YiI6ImNiYzU5MDVhLWFiMmYtNDk2Ni1iZDQwLThhN2RhMWU4NzczMiIsInR5cCI6IkJlYXJlciIsImF6cCI6ImhyLWFwaS1sb2dpbiIsInNlc3Npb25fc3RhdGUiOiI5ZmYzZmE3NC02ZTdjLTQxNTAtOTJiZS1kODU1OTE2ZGVhNzciLCJhY3IiOiIxIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIkVNUExPWUVFIl19LCJzY29wZSI6InByb2ZpbGUgZW1haWwiLCJzaWQiOiI5ZmYzZmE3NC02ZTdjLTQxNTAtOTJiZS1kODU1OTE2ZGVhNzciLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsInByZWZlcnJlZF91c2VybmFtZSI6Impvc2UifQ.cp8FcCeXT6KALIf4ZQOB-4hGLMvViIbGdKmcK5Al_ofK8uyYqBEfjmEHKIPPKkS2HhWVAiyNhCwQiMc37_Oq5MznxTONALgiB_cg6qgA7-VWEuKEnVKU5jmF_sXilrFc3Mzbhq15p_s63EF1z-V_-rBTJmFJSCnV0RGgyxPtBchKWl59gAbtr4ILcKrvlI2mTOpIi1-OogiBnjr3egOxaQaDGpQ5S1114nLzDjgE3bR4y8MWPiJbmrPqm5gynVJi8lDVj7G5E67xPboWS8o09Pz_kOzbfZowTecVWpMWzgrTX59D0umPVs7epOg-N1WBeHGXGv4fnT7bQNkL8hAByw",
-							"type": "string"
-						}
-					]
-				},
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"name\": \"Louisa\",\r\n    \"message\": \"Suele olvidar sus tareas\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8080/feedback",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"feedback"
-					]
-				}
-			},
-			"response": []
-		},
-		{
 			"name": "Token",
 			"protocolProfileBehavior": {
 				"disabledSystemHeaders": {
@@ -163,23 +37,21 @@
 						},
 						{
 							"key": "username",
-							"value": "Jose",
+							"value": "{{username}}",
 							"type": "text"
 						},
 						{
 							"key": "password",
-							"value": "1234",
+							"value": "{{password}}",
 							"type": "text"
 						}
 					]
 				},
 				"url": {
-					"raw": "http://localhost:8082/realms/hr-realm/protocol/openid-connect/token",
-					"protocol": "http",
+					"raw": "{{keycloakUrl}}/realms/hr-realm/protocol/openid-connect/token",
 					"host": [
-						"localhost"
+						"{{keycloakUrl}}"
 					],
-					"port": "8082",
 					"path": [
 						"realms",
 						"hr-realm",
@@ -187,9 +59,431 @@
 						"openid-connect",
 						"token"
 					]
+				},
+				"auth": {
+					"type": "noauth"
+				},
+				"description": "Password grant against the demo realm (local demo only). Set the collection variable `username` to manager, jose, louisa, maria or lukas (password 1234). Stores the access token in `token`, which every other request uses."
+			},
+			"response": [],
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"const body = pm.response.json();",
+							"pm.test('token issued', () => pm.expect(body.access_token).to.be.a('string'));",
+							"pm.collectionVariables.set('token', body.access_token);"
+						]
+					}
 				}
+			]
+		},
+		{
+			"name": "Employees",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/employees",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"employees"
+					]
+				},
+				"description": "MANAGER, EMPLOYEE. Salary and address only for managers and for your own record. Stores louisa's id in `recipientId`."
+			},
+			"response": [],
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"const louisa = pm.response.json().find(e => e.username === 'louisa');",
+							"if (louisa) pm.collectionVariables.set('recipientId', louisa.id);"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "My employee record",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/employees/me",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"employees",
+						"me"
+					]
+				},
+				"description": "MANAGER, EMPLOYEE. 404 when your user has no employee record (e.g. manager). Stores the id in `employeeId`."
+			},
+			"response": [],
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"if (pm.response.code === 200) pm.collectionVariables.set('employeeId', pm.response.json().id);"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Employee by id",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/employees/{{employeeId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"employees",
+						"{{employeeId}}"
+					]
+				},
+				"description": "MANAGER, EMPLOYEE."
 			},
 			"response": []
+		},
+		{
+			"name": "Create employee",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/employees",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"employees"
+					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"nora\",\n    \"name\": \"Nora Weber\",\n    \"department\": \"People\",\n    \"role\": \"Recruiter\",\n    \"email\": \"nora@example.com\",\n    \"salary\": 52000,\n    \"address\": \"Berlin, Germany\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"description": "MANAGER. 201; 409 if the username is taken. Stores the new id in `employeeId`."
+			},
+			"response": [],
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"if (pm.response.code === 201) pm.collectionVariables.set('employeeId', pm.response.json().id);"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Update employee",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/employees/{{employeeId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"employees",
+						"{{employeeId}}"
+					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"new.address@example.com\",\n    \"address\": \"Mainz, Germany\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"description": "MANAGER: every field except username (send them all). EMPLOYEE: only email/address of your own record."
+			},
+			"response": []
+		},
+		{
+			"name": "Delete employee",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/employees/{{employeeId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"employees",
+						"{{employeeId}}"
+					]
+				},
+				"description": "MANAGER. 204. Deletes the feedback about the employee and keeps the feedback they wrote without author."
+			},
+			"response": []
+		},
+		{
+			"name": "Send feedback",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/feedback",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"feedback"
+					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"recipientId\": \"{{recipientId}}\",\n    \"message\": \"Thanks for the clear sprint review!\",\n    \"value\": \"TEAMWORK\",\n    \"anonymous\": false\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"description": "EMPLOYEE with an employee record. value: TEAMWORK, OWNERSHIP, CRAFT, CUSTOMER_FOCUS, GROWTH or omitted. 201."
+			},
+			"response": []
+		},
+		{
+			"name": "Feedback received",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/feedback/received",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"feedback",
+						"received"
+					]
+				},
+				"description": "EMPLOYEE. Feedback about you, newest first; anonymous feedback without author."
+			},
+			"response": []
+		},
+		{
+			"name": "Feedback sent",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/feedback/sent",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"feedback",
+						"sent"
+					]
+				},
+				"description": "EMPLOYEE. Feedback you wrote, newest first."
+			},
+			"response": []
+		},
+		{
+			"name": "All feedback",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/feedback",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"feedback"
+					],
+					"query": [
+						{
+							"key": "recipientId",
+							"value": "{{recipientId}}",
+							"disabled": true
+						},
+						{
+							"key": "department",
+							"value": "Sales",
+							"disabled": true
+						},
+						{
+							"key": "from",
+							"value": "2026-01-01",
+							"disabled": true
+						},
+						{
+							"key": "to",
+							"value": "2026-12-31",
+							"disabled": true
+						},
+						{
+							"key": "sentiment",
+							"value": "NEGATIVE",
+							"description": "POSITIVE, NEUTRAL, NEGATIVE or NONE",
+							"disabled": true
+						}
+					]
+				},
+				"description": "MANAGER. Newest first, optional filters (enable them in Params)."
+			},
+			"response": []
+		},
+		{
+			"name": "Stats overview",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/stats/overview?months=6",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"stats",
+						"overview"
+					],
+					"query": [
+						{
+							"key": "months",
+							"value": "6"
+						}
+					]
+				},
+				"description": "MANAGER. Dashboard figures, months 1..12."
+			},
+			"response": []
+		},
+		{
+			"name": "Settings",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/settings",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"settings"
+					]
+				},
+				"description": "MANAGER, EMPLOYEE."
+			},
+			"response": []
+		},
+		{
+			"name": "Update settings",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/settings",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"settings"
+					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"sentimentAnalysisEnabled\": false\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"description": "MANAGER. When disabled, new feedback is stored without sentiment and Hugging Face is not called."
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080"
+		},
+		{
+			"key": "keycloakUrl",
+			"value": "http://localhost:8082"
+		},
+		{
+			"key": "username",
+			"value": "jose"
+		},
+		{
+			"key": "password",
+			"value": "1234"
+		},
+		{
+			"key": "token",
+			"value": ""
+		},
+		{
+			"key": "employeeId",
+			"value": ""
+		},
+		{
+			"key": "recipientId",
+			"value": ""
 		}
 	]
 }

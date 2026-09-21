@@ -1,13 +1,14 @@
 package dev.jacid.hrApplication.adapter.in.http.dto;
 
-/**
- * JSON representation of a feedback entry. {@code name} is the employee the feedback is about.
- * On requests only {@code name} and {@code message} are read; {@code score} and {@code label}
- * are filled in by the sentiment analysis.
- */
-public record FeedbackDTO(String name, String message, Double score, String label) {
+import java.time.Instant;
+import java.util.UUID;
 
-    public FeedbackDTO(String name, String message) {
-        this(name, message, null, null);
-    }
+/**
+ * JSON representation of a feedback entry. {@code authorId}/{@code authorName} are {@code null} for
+ * anonymous feedback (except for its author) and {@code sentiment} is {@code null} when not analysed.
+ */
+public record FeedbackDTO(UUID id, UUID recipientId, String recipientName, UUID authorId, String authorName,
+                          boolean anonymous, String value, String message, SentimentDTO sentiment, Instant createdAt) {
+
+    public record SentimentDTO(String label, double score) {}
 }

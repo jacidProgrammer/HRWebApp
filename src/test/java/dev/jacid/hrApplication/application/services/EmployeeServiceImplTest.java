@@ -1,21 +1,23 @@
 package dev.jacid.hrApplication.application.services;
 
+import static dev.jacid.hrApplication.testsupport.TestData.JOSE;
+import static dev.jacid.hrApplication.testsupport.TestData.LOUISA;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import dev.jacid.hrApplication.application.port.out.CurrentUserProvider;
 import dev.jacid.hrApplication.application.port.out.EmployeeRepository;
@@ -27,29 +29,32 @@ import dev.jacid.hrApplication.domain.model.CurrentUser;
 import dev.jacid.hrApplication.domain.model.Employee;
 import dev.jacid.hrApplication.domain.model.Role;
 
-@ExtendWith(MockitoExtension.class)
 class EmployeeServiceImplTest {
 
-    private static final Employee JOSE =
-            new Employee(1L, "Jose", "IT", "Backend", "jose@test.com", 75600.0, "Mainz");
-    private static final Employee LOUISA =
-            new Employee(2L, "Louisa", "IT", "Agile Coach", "louisa@test.com", 79600.0, "Mainz");
+    private static final Instant NOW = Instant.parse("2026-09-21T10:15:30Z");
 
-    private static final CurrentUser MANAGER = new CurrentUser("boss", Set.of(Role.MANAGER));
-    private static final CurrentUser EMPLOYEE_JOSE = new CurrentUser("jose", Set.of(Role.EMPLOYEE));
+    private static final CurrentUser MANAGER = new CurrentUser("manager", Set.of(Role.MANAGER));
+    private static final CurrentUser EMPLOYEE_JOSE = new CurrentUser("JOSE", Set.of(Role.EMPLOYEE));
     private static final CurrentUser NO_ROLES = new CurrentUser("guest", Set.of());
 
-    @Mock
     private EmployeeRepository employeeRepository;
-
-    @Mock
     private CurrentUserProvider currentUserProvider;
-
-    @InjectMocks
     private EmployeeServiceImpl service;
+
+    @BeforeEach
+    void setUp() {
+        employeeRepository = mock(EmployeeRepository.class);
+        currentUserProvider = mock(CurrentUserProvider.class);
+        service = new EmployeeServiceImpl(employeeRepository, currentUserProvider, () -> NOW);
+    }
 
     private void callerIs(CurrentUser user) {
         given(currentUserProvider.currentUser()).willReturn(user);
+    }
+
+    private static Employee request(String username, String name, String department, String role, String email,
+                                    Double salary, String address) {
+        return new Employee(null, username, name, department, role, email, salary, address, null);
     }
 
     @Test
@@ -61,16 +66,11 @@ class EmployeeServiceImplTest {
     }
 
     @Test
-    void employeeSeesSensitiveDataOnlyOnTheirOwnProfile() {
+    void employeeSeesSensitiveDataOnlyOnTheirOwnRecordMatchedByUsername() {
         callerIs(EMPLOYEE_JOSE);
         given(employeeRepository.findAll()).willReturn(List.of(JOSE, LOUISA));
 
-        List<Employee> result = service.getAllEmployees();
-
-        assertThat(result.get(0)).isEqualTo(JOSE);
-        assertThat(result.get(1)).isEqualTo(LOUISA.withoutSensitiveData());
-        assertThat(result.get(1).salary()).isNull();
-        assertThat(result.get(1).address()).isNull();
+        assertThat(service.getAllEmployees()).containsExactly(JOSE, LOUISA.withoutSensitiveData());
     }
 
     @Test
@@ -82,79 +82,106 @@ class EmployeeServiceImplTest {
     }
 
     @Test
-    void getEmployeeByNameReturnsTheEmployee() {
-        given(employeeRepository.findByName("Jose")).willReturn(Optional.of(JOSE));
+    void getEmployeeHidesSensitiveDataOfOthers() {
+        callerIs(EMPLOYEE_JOSE);
+        given(employeeRepository.findById(LOUISA.id())).willReturn(Optional.of(LOUISA));
+        given(employeeRepository.findById(JOSE.id())).willReturn(Optional.of(JOSE));
 
-        assertThat(service.getEmployeeByName("Jose")).isEqualTo(JOSE);
+        assertThat(service.getEmployee(LOUISA.id()).salary()).isNull();
+        assertThat(service.getEmployee(JOSE.id())).isEqualTo(JOSE);
     }
 
     @Test
-    void getEmployeeByNameFailsWhenMissing() {
-        given(employeeRepository.findByName("Nobody")).willReturn(Optional.empty());
+    void getEmployeeFailsWhenMissing() {
+        UUID unknown = UUID.randomUUID();
+        given(employeeRepository.findById(unknown)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.getEmployeeByName("Nobody"))
+        assertThatThrownBy(() -> service.getEmployee(unknown))
                 .isInstanceOf(EmployeeNotFoundException.class)
-                .hasMessage("Employee 'Nobody' not found");
+                .hasMessage("Employee '" + unknown + "' not found");
     }
 
     @Test
-    void createEmployeeSavesNewEmployee() {
-        Employee maria = new Employee(null, "Maria", "HR", "Recruiter", "maria@test.com", 52000.0, "Berlin");
-        Employee saved = new Employee(3L, "Maria", "HR", "Recruiter", "maria@test.com", 52000.0, "Berlin");
-        given(employeeRepository.findByName("Maria")).willReturn(Optional.empty());
-        given(employeeRepository.save(maria)).willReturn(saved);
+    void currentEmployeeIsFoundByTheTokenUsername() {
+        callerIs(EMPLOYEE_JOSE);
+        given(employeeRepository.findByUsername("JOSE")).willReturn(Optional.of(JOSE));
+
+        assertThat(service.getCurrentEmployee()).isEqualTo(JOSE);
+    }
+
+    @Test
+    void currentEmployeeIsMissingForUsersWithoutRecord() {
+        callerIs(MANAGER);
+        given(employeeRepository.findByUsername("manager")).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.getCurrentEmployee())
+                .isInstanceOf(EmployeeNotFoundException.class)
+                .hasMessage("No employee record is linked to user 'manager'");
+    }
+
+    @Test
+    void createEmployeeNormalisesTheUsernameAndSetsTheCreationDate() {
+        Employee maria = request(" Maria ", "María García", "Sales", "AE", "maria@test.com", 52000.0, "Berlin");
+        Employee expected = new Employee(null, "maria", "María García", "Sales", "AE", "maria@test.com", 52000.0, "Berlin", NOW);
+        Employee saved = new Employee(UUID.randomUUID(), "maria", "María García", "Sales", "AE", "maria@test.com", 52000.0, "Berlin", NOW);
+        given(employeeRepository.findByUsername("maria")).willReturn(Optional.empty());
+        given(employeeRepository.save(expected)).willReturn(saved);
 
         assertThat(service.createEmployee(maria)).isEqualTo(saved);
     }
 
     @Test
-    void createEmployeeRejectsDuplicateName() {
-        given(employeeRepository.findByName("Jose")).willReturn(Optional.of(JOSE));
+    void createEmployeeRejectsATakenUsername() {
+        given(employeeRepository.findByUsername("jose")).willReturn(Optional.of(JOSE));
 
-        assertThatThrownBy(() -> service.createEmployee(JOSE))
-                .isInstanceOf(EmployeeAlreadyExistsException.class);
+        assertThatThrownBy(() -> service.createEmployee(request("Jose", "Another José", "IT", "Dev", "j2@test.com", 1.0, "x")))
+                .isInstanceOf(EmployeeAlreadyExistsException.class)
+                .hasMessage("An employee with username 'jose' already exists");
         then(employeeRepository).should(never()).save(any());
     }
 
     @Test
     void createEmployeeRejectsIncompleteData() {
-        Employee incomplete = new Employee(null, "Maria", "HR", null, "maria@test.com", null, "Berlin");
+        Employee incomplete = request(null, "Maria", "HR", null, "maria@test.com", null, "Berlin");
 
         assertThatThrownBy(() -> service.createEmployee(incomplete))
                 .isInstanceOf(InvalidEmployeeDataException.class)
-                .hasMessage("Missing required fields: role, salary");
+                .hasMessage("Missing required fields: username, role, salary");
         then(employeeRepository).should(never()).save(any());
     }
 
     @Test
-    void managerUpdatesEveryFieldExceptTheName() {
+    void managerUpdatesEveryFieldExceptTheUsername() {
         callerIs(MANAGER);
-        Employee changes = new Employee(null, null, "Product", "Scrum Master", "l@test.com", 80000.0, "Berlin");
-        Employee expected = new Employee(2L, "Louisa", "Product", "Scrum Master", "l@test.com", 80000.0, "Berlin");
-        given(employeeRepository.findByName("louisa")).willReturn(Optional.of(LOUISA));
+        Employee changes = request(null, "Louisa B.", "Product", "Scrum Master", "l@test.com", 80000.0, "Berlin");
+        Employee expected = new Employee(LOUISA.id(), "louisa", "Louisa B.", "Product", "Scrum Master", "l@test.com",
+                80000.0, "Berlin", LOUISA.createdAt());
+        given(employeeRepository.findById(LOUISA.id())).willReturn(Optional.of(LOUISA));
         given(employeeRepository.save(expected)).willReturn(expected);
 
-        assertThat(service.updateEmployee("louisa", changes)).isEqualTo(expected);
+        assertThat(service.updateEmployee(LOUISA.id(), changes)).isEqualTo(expected);
     }
 
     @Test
-    void employeeUpdatesTheContactDetailsOfTheirOwnProfile() {
+    void employeeUpdatesTheContactDetailsOfTheirOwnRecord() {
         callerIs(EMPLOYEE_JOSE);
-        Employee changes = new Employee(null, "Jose", null, null, "new@test.com", null, "Berlin");
-        Employee expected = new Employee(1L, "Jose", "IT", "Backend", "new@test.com", 75600.0, "Berlin");
-        given(employeeRepository.findByName("Jose")).willReturn(Optional.of(JOSE));
-        given(employeeRepository.save(expected)).willReturn(expected);
+        Employee changes = request(null, null, null, null, "new@test.com", null, "Berlin");
+        given(employeeRepository.findById(JOSE.id())).willReturn(Optional.of(JOSE));
+        given(employeeRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
 
-        assertThat(service.updateEmployee("Jose", changes)).isEqualTo(expected);
+        Employee updated = service.updateEmployee(JOSE.id(), changes);
+
+        assertThat(updated.email()).isEqualTo("new@test.com");
+        assertThat(updated.address()).isEqualTo("Berlin");
+        assertThat(updated.salary()).isEqualTo(JOSE.salary());
     }
 
     @Test
-    void employeeCanNotRaiseTheirOwnSalary() {
+    void employeeCanNotChangeTheirOwnName() {
         callerIs(EMPLOYEE_JOSE);
-        Employee changes = new Employee(null, "Jose", "IT", "Backend", "jose@test.com", 99999.0, "Mainz");
-        given(employeeRepository.findByName("Jose")).willReturn(Optional.of(JOSE));
+        given(employeeRepository.findById(JOSE.id())).willReturn(Optional.of(JOSE));
 
-        assertThatThrownBy(() -> service.updateEmployee("Jose", changes))
+        assertThatThrownBy(() -> service.updateEmployee(JOSE.id(), request(null, "Pepe", null, null, null, null, null)))
                 .isInstanceOf(OperationNotAllowedException.class);
         then(employeeRepository).should(never()).save(any());
     }
@@ -162,45 +189,38 @@ class EmployeeServiceImplTest {
     @Test
     void employeeCanNotUpdateSomeoneElse() {
         callerIs(EMPLOYEE_JOSE);
+        given(employeeRepository.findById(LOUISA.id())).willReturn(Optional.of(LOUISA));
 
-        assertThatThrownBy(() -> service.updateEmployee("Louisa", LOUISA))
+        assertThatThrownBy(() -> service.updateEmployee(LOUISA.id(), request(null, null, null, null, "x@test.com", null, null)))
                 .isInstanceOf(OperationNotAllowedException.class)
                 .hasMessage("You can only update your own profile");
         then(employeeRepository).should(never()).save(any());
     }
 
     @Test
-    void updateRejectsADifferentNameInTheBody() {
-        assertThatThrownBy(() -> service.updateEmployee("Jose", LOUISA))
-                .isInstanceOf(InvalidEmployeeDataException.class);
-        then(employeeRepository).should(never()).save(any());
-    }
-
-    @Test
     void updateFailsWhenEmployeeDoesNotExist() {
-        callerIs(MANAGER);
-        given(employeeRepository.findByName("Nobody")).willReturn(Optional.empty());
+        UUID unknown = UUID.randomUUID();
+        given(employeeRepository.findById(unknown)).willReturn(Optional.empty());
 
-        Employee changes = new Employee(null, null, "IT", "Dev", "n@test.com", 1.0, "x");
-        assertThatThrownBy(() -> service.updateEmployee("Nobody", changes))
+        assertThatThrownBy(() -> service.updateEmployee(unknown, request(null, "N", "IT", "Dev", "n@test.com", 1.0, "x")))
                 .isInstanceOf(EmployeeNotFoundException.class);
     }
 
     @Test
-    void deleteUsesTheStoredNameSoLookupAndDeleteAgreeOnCase() {
-        given(employeeRepository.findByName("jose")).willReturn(Optional.of(JOSE));
+    void deleteRemovesTheEmployee() {
+        given(employeeRepository.findById(JOSE.id())).willReturn(Optional.of(JOSE));
 
-        service.deleteEmployeeByName("jose");
+        service.deleteEmployee(JOSE.id());
 
-        then(employeeRepository).should().deleteByName("Jose");
+        then(employeeRepository).should().deleteById(JOSE.id());
     }
 
     @Test
     void deleteFailsWhenEmployeeDoesNotExist() {
-        given(employeeRepository.findByName("Nobody")).willReturn(Optional.empty());
+        UUID unknown = UUID.randomUUID();
+        given(employeeRepository.findById(unknown)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.deleteEmployeeByName("Nobody"))
-                .isInstanceOf(EmployeeNotFoundException.class);
-        then(employeeRepository).should(never()).deleteByName(any());
+        assertThatThrownBy(() -> service.deleteEmployee(unknown)).isInstanceOf(EmployeeNotFoundException.class);
+        then(employeeRepository).should(never()).deleteById(any());
     }
 }

@@ -10,4 +10,7 @@ import dev.jacid.hrApplication.domain.model.Sentiment;
  */
 public interface SentimentAnalyzer {
     Optional<Sentiment> analyze(String text);
+
+    /** Whether the analyzer is configured at all (e.g. has credentials for the external service). */
+    boolean isAvailable();
 }

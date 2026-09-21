@@ -1,15 +1,16 @@
 package dev.jacid.hrApplication.application.services;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
 import dev.jacid.hrApplication.application.port.in.EmployeesUseCases;
 import dev.jacid.hrApplication.application.port.out.CurrentUserProvider;
 import dev.jacid.hrApplication.application.port.out.EmployeeRepository;
+import dev.jacid.hrApplication.application.port.out.TimeProvider;
 import dev.jacid.hrApplication.domain.exception.EmployeeAlreadyExistsException;
 import dev.jacid.hrApplication.domain.exception.EmployeeNotFoundException;
-import dev.jacid.hrApplication.domain.exception.InvalidEmployeeDataException;
 import dev.jacid.hrApplication.domain.exception.OperationNotAllowedException;
 import dev.jacid.hrApplication.domain.model.CurrentUser;
 import dev.jacid.hrApplication.domain.model.Employee;
@@ -21,72 +22,75 @@ public class EmployeeServiceImpl implements EmployeesUseCases {
 
     private final EmployeeRepository employeeRepository;
     private final CurrentUserProvider currentUserProvider;
+    private final TimeProvider timeProvider;
 
-    public EmployeeServiceImpl(EmployeeRepository employeeRepository, CurrentUserProvider currentUserProvider) {
+    public EmployeeServiceImpl(EmployeeRepository employeeRepository, CurrentUserProvider currentUserProvider,
+                               TimeProvider timeProvider) {
         this.employeeRepository = employeeRepository;
         this.currentUserProvider = currentUserProvider;
+        this.timeProvider = timeProvider;
     }
 
-    /**
-     * Managers see every field of every employee; everyone else sees the sensitive fields
-     * (salary, address) only on their own profile.
-     */
     @Override
     public List<Employee> getAllEmployees() {
         CurrentUser caller = currentUserProvider.currentUser();
-        List<Employee> employees = employeeRepository.findAll();
-        if (caller.isManager()) {
-            return employees;
-        }
-        return employees.stream()
-                .map(employee -> caller.isEmployeeNamed(employee.name()) ? employee : employee.withoutSensitiveData())
-                .toList();
+        return employeeRepository.findAll().stream().map(employee -> visibleTo(caller, employee)).toList();
     }
 
     @Override
-    public Employee getEmployeeByName(String name) {
-        return findExisting(name);
+    public Employee getCurrentEmployee() {
+        String username = currentUserProvider.currentUser().username();
+        if (username == null) {
+            throw EmployeeNotFoundException.linkedTo(null);
+        }
+        return employeeRepository.findByUsername(username).orElseThrow(() -> EmployeeNotFoundException.linkedTo(username));
+    }
+
+    @Override
+    public Employee getEmployee(UUID id) {
+        return visibleTo(currentUserProvider.currentUser(), findExisting(id));
     }
 
     @Override
     @Transactional
     public Employee createEmployee(Employee employee) {
-        employee.requireComplete();
-        if (employeeRepository.findByName(employee.name()).isPresent()) {
-            throw new EmployeeAlreadyExistsException(employee.name());
+        Employee candidate = Employee.newFrom(employee, timeProvider.now()).requireComplete();
+        if (employeeRepository.findByUsername(candidate.username()).isPresent()) {
+            throw new EmployeeAlreadyExistsException(candidate.username());
         }
-        return employeeRepository.save(employee);
+        return employeeRepository.save(candidate);
     }
 
     /**
-     * Managers may change every field except the name. Employees may only change the contact
-     * details (email, address) of their own profile.
+     * Managers may change every field except the username. Employees may only change the contact
+     * details (email, address) of their own record.
      */
     @Override
     @Transactional
-    public Employee updateEmployee(String name, Employee changes) {
-        if (changes.name() != null && !changes.name().equalsIgnoreCase(name)) {
-            throw new InvalidEmployeeDataException(
-                    "Name in the body ('" + changes.name() + "') does not match the path ('" + name + "'); renaming is not supported");
-        }
+    public Employee updateEmployee(UUID id, Employee changes) {
+        Employee current = findExisting(id);
         CurrentUser caller = currentUserProvider.currentUser();
         if (caller.isManager()) {
-            return employeeRepository.save(EmployeeUpdatePolicy.updateByManager(findExisting(name), changes));
+            return employeeRepository.save(EmployeeUpdatePolicy.updateByManager(current, changes));
         }
-        if (caller.isEmployeeNamed(name)) {
-            return employeeRepository.save(EmployeeUpdatePolicy.updateBySelf(findExisting(name), changes));
+        if (caller.owns(current)) {
+            return employeeRepository.save(EmployeeUpdatePolicy.updateBySelf(current, changes));
         }
         throw new OperationNotAllowedException("You can only update your own profile");
     }
 
     @Override
     @Transactional
-    public void deleteEmployeeByName(String name) {
-        Employee existing = findExisting(name);
-        employeeRepository.deleteByName(existing.name());
+    public void deleteEmployee(UUID id) {
+        employeeRepository.deleteById(findExisting(id).id());
     }
 
-    private Employee findExisting(String name) {
-        return employeeRepository.findByName(name).orElseThrow(() -> new EmployeeNotFoundException(name));
+    /** Managers see every field; everybody else sees salary and address only on their own record. */
+    private static Employee visibleTo(CurrentUser caller, Employee employee) {
+        return caller.isManager() || caller.owns(employee) ? employee : employee.withoutSensitiveData();
+    }
+
+    private Employee findExisting(UUID id) {
+        return employeeRepository.findById(id).orElseThrow(() -> EmployeeNotFoundException.withId(id));
     }
 }

@@ -18,6 +18,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 import dev.jacid.hrApplication.domain.model.Sentiment;
+import dev.jacid.hrApplication.domain.model.SentimentLabel;
 
 class HuggingFaceSentimentAdapterTest {
 
@@ -50,7 +51,7 @@ class HuggingFaceSentimentAdapterTest {
                         """, MediaType.APPLICATION_JSON));
 
         assertThat(adapterWithToken("secret").analyze("Great job"))
-                .contains(new Sentiment("positive", 0.97));
+                .contains(new Sentiment(SentimentLabel.POSITIVE, 0.97));
         server.verify();
     }
 
@@ -78,7 +79,32 @@ class HuggingFaceSentimentAdapterTest {
 
     @Test
     void doesNotCallTheApiWithoutToken() {
-        assertThat(adapterWithToken("").analyze("Great job")).isEmpty();
+        HuggingFaceSentimentAdapter adapter = adapterWithToken("");
+
+        assertThat(adapter.isAvailable()).isFalse();
+        assertThat(adapter.analyze("Great job")).isEmpty();
         server.verify(); // no request expected, none made
+    }
+
+    @Test
+    void isAvailableWithAToken() {
+        assertThat(adapterWithToken("secret").isAvailable()).isTrue();
+    }
+
+    @Test
+    void understandsNumberedLabelsOfThreeClassModels() {
+        server.expect(requestTo(ENDPOINT)).andRespond(withSuccess(
+                "[[{\"label\":\"LABEL_0\",\"score\":0.88},{\"label\":\"LABEL_2\",\"score\":0.1}]]",
+                MediaType.APPLICATION_JSON));
+
+        assertThat(adapterWithToken("secret").analyze("Not good")).contains(new Sentiment(SentimentLabel.NEGATIVE, 0.88));
+    }
+
+    @Test
+    void returnsEmptyForUnknownLabels() {
+        server.expect(requestTo(ENDPOINT)).andRespond(withSuccess(
+                "[[{\"label\":\"joy\",\"score\":0.88}]]", MediaType.APPLICATION_JSON));
+
+        assertThat(adapterWithToken("secret").analyze("Yay")).isEmpty();
     }
 }
