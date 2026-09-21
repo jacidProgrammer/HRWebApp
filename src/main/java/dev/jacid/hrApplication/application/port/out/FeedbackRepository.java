@@ -2,10 +2,10 @@ package dev.jacid.hrApplication.application.port.out;
 
 import java.util.List;
 
-import dev.jacid.hrApplication.adapter.out.persistence.FeedbackJpaEntity;
+import dev.jacid.hrApplication.domain.model.Feedback;
 
 public interface FeedbackRepository {
-    List<FeedbackJpaEntity> findAll();
-    List<FeedbackJpaEntity> findByEmployeeName(String name);
-    void save(FeedbackJpaEntity feedbackDTO);
+    List<Feedback> findAll();
+    List<Feedback> findByEmployeeName(String name);
+    Feedback save(Feedback feedback);
 }

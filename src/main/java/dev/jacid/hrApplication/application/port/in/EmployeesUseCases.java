@@ -2,12 +2,13 @@ package dev.jacid.hrApplication.application.port.in;
 
 import java.util.List;
 
-import dev.jacid.hrApplication.domain.model.dto.EmployeeDTO;
+import dev.jacid.hrApplication.domain.model.Employee;
 
 public interface EmployeesUseCases {
-    List<EmployeeDTO> getAllEmployees();
-    EmployeeDTO getEmployeeByName(String name);
-    EmployeeDTO createEmployee(EmployeeDTO beerDTO);
-    EmployeeDTO updateEmployee(EmployeeDTO beerDTO);
+    List<Employee> getAllEmployees();
+    Employee getEmployeeByName(String name);
+    Employee createEmployee(Employee employee);
+    /** Updates the employee identified by {@code name}; the name itself cannot be changed. */
+    Employee updateEmployee(String name, Employee changes);
     void deleteEmployeeByName(String name);
 }

@@ -18,25 +18,15 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import dev.jacid.hrApplication.domain.model.dto.EmployeeDTO;
+import dev.jacid.hrApplication.adapter.in.http.dto.EmployeeDTO;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Testcontainers
 @ActiveProfiles("test")
 class EmployeeControllerTest {
-
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
-            .withDatabaseName("HRAPI_test")
-            .withUsername("admin")
-            .withPassword("admin");
 
     @Autowired
     private MockMvc mockMvc;
@@ -98,7 +88,7 @@ class EmployeeControllerTest {
         mockMvc.perform(post("/employees")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(employee)))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -125,26 +115,102 @@ class EmployeeControllerTest {
 
     @Test
     @WithMockUser(username = "Jose", roles = "EMPLOYEE")
-    void employeeCanModifyTheirOwnData() throws Exception {
-        EmployeeDTO employee = new EmployeeDTO("Jose", "IT", "Senior Java", "back@test.com", 75600.0, "Mainz, Germany");
+    void employeeCanModifyTheirOwnContactDetails() throws Exception {
+        // department, role and salary are sent unchanged; only the email changes
+        EmployeeDTO employee = new EmployeeDTO("Jose", "IT", "java Senior Backend", "jose.new@test.com", 75600.0, "Mainz, Germany");
         mockMvc.perform(put("/employees/Jose")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(employee)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name", is("Jose")))
-                .andExpect(jsonPath("$.department", is("IT")))
-                .andExpect(jsonPath("$.role", is("Senior Java")))
-                .andExpect(jsonPath("$.email", is("back@test.com")));
+                .andExpect(jsonPath("$.role", is("java Senior Backend")))
+                .andExpect(jsonPath("$.salary", is(75600.0)))
+                .andExpect(jsonPath("$.email", is("jose.new@test.com")));
     }
 
     @Test
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(username = "Jose", roles = "EMPLOYEE")
+    void employeeCanNotChangeTheirOwnSalary() throws Exception {
+        EmployeeDTO employee = new EmployeeDTO("Jose", "IT", "java Senior Backend", "jose@test.com", 99999.0, "Mainz, Germany");
+        mockMvc.perform(put("/employees/Jose")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(employee)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code", is("FORBIDDEN")))
+                .andExpect(jsonPath("$.message", is("Only managers can change department, role or salary")));
+    }
+
+    @Test
+    @WithMockUser(username = "Jose", roles = "EMPLOYEE")
+    void employeeCanNotChangeTheirOwnRole() throws Exception {
+        EmployeeDTO employee = new EmployeeDTO(null, null, "Head of IT", null, null, null);
+        mockMvc.perform(put("/employees/Jose")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(employee)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "Jose", roles = "EMPLOYEE")
     void employeeCanNotModifyOtherEmployees() throws Exception {
-        EmployeeDTO employee = new EmployeeDTO("Jose", "HR", "Recruiter", "recruiter@test.com", 52536.89, "Berlin");
+        EmployeeDTO employee = new EmployeeDTO("Louisa", "IT", "Senior Agile Coach", "hacked@test.com", 79600.0, "Mainz, Germany");
+        mockMvc.perform(put("/employees/Louisa")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(employee)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message", is("You can only update your own profile")));
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    void updateWithDifferentNameInBodyIsRejected() throws Exception {
+        EmployeeDTO employee = new EmployeeDTO("Louisa", "IT", "Backend", "back@test.com", 1.0, "Mainz");
+        mockMvc.perform(put("/employees/Jose")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(employee)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", is("BAD_REQUEST")));
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    void updatingUnknownEmployeeReturns404() throws Exception {
+        EmployeeDTO employee = new EmployeeDTO(null, "IT", "Backend", "back@test.com", 1.0, "Mainz");
+        mockMvc.perform(put("/employees/Nobody")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(employee)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    void getUnknownEmployeeReturns404() throws Exception {
+        mockMvc.perform(get("/employees/Nobody"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code", is("NOT_FOUND")))
+                .andExpect(jsonPath("$.message", is("Employee 'Nobody' not found")));
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    void creatingAnExistingEmployeeReturns409() throws Exception {
+        EmployeeDTO employee = new EmployeeDTO("Louisa", "IT", "Coach", "l@test.com", 1.0, "Mainz");
         mockMvc.perform(post("/employees")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(employee)))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code", is("CONFLICT")));
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    void creatingAnEmployeeWithMissingFieldsReturns400() throws Exception {
+        EmployeeDTO employee = new EmployeeDTO("Incomplete", "IT", null, "i@test.com", null, "Mainz");
+        mockMvc.perform(post("/employees")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(employee)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", is("Missing required fields: role, salary")));
     }
 
     @Test
@@ -166,10 +232,14 @@ class EmployeeControllerTest {
     @Test
     @WithMockUser(roles = "EMPLOYEE")
     void employeeCanNotdelete() throws Exception {
-        // Create a new employee
-        EmployeeDTO employee = new EmployeeDTO("TestEmployeeDelete", "Sales", "Call Center", "sales@test.com", 47890.00, "Hamburg");
-        // Delete the employee
         mockMvc.perform(delete("/employees/Jose"))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    void deletingUnknownEmployeeReturns404() throws Exception {
+        mockMvc.perform(delete("/employees/Nobody"))
+                .andExpect(status().isNotFound());
     }
 }

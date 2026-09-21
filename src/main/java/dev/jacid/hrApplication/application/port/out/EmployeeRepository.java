@@ -1,12 +1,13 @@
 package dev.jacid.hrApplication.application.port.out;
 
 import java.util.List;
+import java.util.Optional;
 
-import dev.jacid.hrApplication.adapter.out.persistence.EmployeeJpaEntity;
+import dev.jacid.hrApplication.domain.model.Employee;
 
 public interface EmployeeRepository {
-    List<EmployeeJpaEntity> findAll();
-    EmployeeJpaEntity findByName(String name);
-    void save(EmployeeJpaEntity employeeDTO);
+    List<Employee> findAll();
+    Optional<Employee> findByName(String name);
+    Employee save(Employee employee);
     void deleteByName(String name);
 }

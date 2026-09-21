@@ -4,104 +4,89 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import dev.jacid.hrApplication.adapter.out.persistence.EmployeeJpaEntity;
-import dev.jacid.hrApplication.application.mappers.EmployeeMapper;
 import dev.jacid.hrApplication.application.port.in.EmployeesUseCases;
+import dev.jacid.hrApplication.application.port.out.CurrentUserProvider;
 import dev.jacid.hrApplication.application.port.out.EmployeeRepository;
-import dev.jacid.hrApplication.infrastructure.security.AuthenticatedUser;
-import dev.jacid.hrApplication.domain.model.dto.EmployeeDTO;
+import dev.jacid.hrApplication.domain.exception.EmployeeAlreadyExistsException;
+import dev.jacid.hrApplication.domain.exception.EmployeeNotFoundException;
+import dev.jacid.hrApplication.domain.exception.InvalidEmployeeDataException;
+import dev.jacid.hrApplication.domain.exception.OperationNotAllowedException;
+import dev.jacid.hrApplication.domain.model.CurrentUser;
+import dev.jacid.hrApplication.domain.model.Employee;
+import dev.jacid.hrApplication.domain.service.EmployeeUpdatePolicy;
 import jakarta.transaction.Transactional;
 
 @Service
 public class EmployeeServiceImpl implements EmployeesUseCases {
 
     private final EmployeeRepository employeeRepository;
-    private final EmployeeMapper employeeMapper;
-    private final AuthenticatedUser auth;
+    private final CurrentUserProvider currentUserProvider;
 
-    public EmployeeServiceImpl(EmployeeRepository employeeRepository,
-                               EmployeeMapper employeeMapper,
-                               AuthenticatedUser auth) {
+    public EmployeeServiceImpl(EmployeeRepository employeeRepository, CurrentUserProvider currentUserProvider) {
         this.employeeRepository = employeeRepository;
-        this.employeeMapper = employeeMapper;
-        this.auth = auth;
+        this.currentUserProvider = currentUserProvider;
     }
-    
+
+    /**
+     * Managers see every field of every employee; everyone else sees the sensitive fields
+     * (salary, address) only on their own profile.
+     */
     @Override
-    public List<EmployeeDTO> getAllEmployees() {
-        return filterDataVisibility(employeeRepository.findAll());
-    }
-    
-    private boolean hasPermissionToViewOrEditAllData() {
-        return auth.isManager();
-    }
-
-    private boolean hasPermissionToViewOrEditThisProfile(String employeeName) {
-        return auth.isEmployee() && employeeName.equalsIgnoreCase(auth.getUserName());
-    }
-    
-    private List<EmployeeDTO> filterSensitiveData(List<EmployeeJpaEntity> employeeList) {
-        return employeeList.stream().map(employee -> {
-            if(hasPermissionToViewOrEditThisProfile(employee.getName())) {
-                return employeeMapper.toDto(employee);
-            } else {
-                return employeeMapper.toDtoPublic(employee);
-            }
-        }).toList();
-    }
-
-    public List<EmployeeDTO> filterDataVisibility(List<EmployeeJpaEntity> employeeList) {
-        if(employeeList.isEmpty()) {
-            return List.of();
+    public List<Employee> getAllEmployees() {
+        CurrentUser caller = currentUserProvider.currentUser();
+        List<Employee> employees = employeeRepository.findAll();
+        if (caller.isManager()) {
+            return employees;
         }
-        
-        if(hasPermissionToViewOrEditAllData()) {
-            return employeeList.stream().map(employeeMapper::toDto).toList();
-        } else {
-            return filterSensitiveData(employeeList);
-        }
+        return employees.stream()
+                .map(employee -> caller.isEmployeeNamed(employee.name()) ? employee : employee.withoutSensitiveData())
+                .toList();
     }
 
-    public EmployeeDTO getEmployeeByName(String name) {
-        EmployeeJpaEntity employeeEntity = employeeRepository.findByName(name);
-        if(employeeEntity == null) {
-            throw new IllegalArgumentException("Employee with this name doesn't exist");
-        }
-        return employeeMapper.toDto(employeeEntity);
+    @Override
+    public Employee getEmployeeByName(String name) {
+        return findExisting(name);
     }
 
+    @Override
     @Transactional
-    public EmployeeDTO createEmployee(EmployeeDTO employeeDTO) {
-        EmployeeJpaEntity employeeEntity = employeeRepository.findByName(employeeDTO.name());
-        if(employeeEntity != null) {
-            throw new IllegalArgumentException("Employee with this name already exists");
+    public Employee createEmployee(Employee employee) {
+        employee.requireComplete();
+        if (employeeRepository.findByName(employee.name()).isPresent()) {
+            throw new EmployeeAlreadyExistsException(employee.name());
         }
-        employeeRepository.save(employeeMapper.toEntity(employeeDTO));
-        return employeeDTO;
+        return employeeRepository.save(employee);
     }
 
+    /**
+     * Managers may change every field except the name. Employees may only change the contact
+     * details (email, address) of their own profile.
+     */
+    @Override
     @Transactional
-    public EmployeeDTO updateEmployee(EmployeeDTO employeeDTO) {
-        if(!hasPermissionToViewOrEditAllData() && !hasPermissionToViewOrEditThisProfile(employeeDTO.name())) {
-            throw new IllegalArgumentException("You don't have permission to edit this employee");
+    public Employee updateEmployee(String name, Employee changes) {
+        if (changes.name() != null && !changes.name().equalsIgnoreCase(name)) {
+            throw new InvalidEmployeeDataException(
+                    "Name in the body ('" + changes.name() + "') does not match the path ('" + name + "'); renaming is not supported");
         }
-        
-        EmployeeJpaEntity employeeEntity = employeeRepository.findByName(employeeDTO.name());
-        if(employeeEntity == null) {
-            throw new IllegalArgumentException("Employee with this name doesn't exist");
+        CurrentUser caller = currentUserProvider.currentUser();
+        if (caller.isManager()) {
+            return employeeRepository.save(EmployeeUpdatePolicy.updateByManager(findExisting(name), changes));
         }
-        EmployeeJpaEntity newEntity = employeeMapper.toEntity(employeeDTO);
-        newEntity.setId(employeeEntity.getId());
-        employeeRepository.save(newEntity);
-        return employeeDTO;
+        if (caller.isEmployeeNamed(name)) {
+            return employeeRepository.save(EmployeeUpdatePolicy.updateBySelf(findExisting(name), changes));
+        }
+        throw new OperationNotAllowedException("You can only update your own profile");
     }
 
+    @Override
     @Transactional
     public void deleteEmployeeByName(String name) {
-        EmployeeJpaEntity employeeEntity = employeeRepository.findByName(name);
-        if(employeeEntity == null) {
-            throw new IllegalArgumentException("Employee with this name doesn't exist");
-        }
-        employeeRepository.deleteByName(name);
+        Employee existing = findExisting(name);
+        employeeRepository.deleteByName(existing.name());
+    }
+
+    private Employee findExisting(String name) {
+        return employeeRepository.findByName(name).orElseThrow(() -> new EmployeeNotFoundException(name));
     }
 }

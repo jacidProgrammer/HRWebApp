@@ -73,35 +73,8 @@ application.log
 # IDE Configuration
 ###################
 
-# IntelliJ IDEA - SELECTIVE SHARING
-# INCLUDE these for team sharing (run configurations, compiler settings)
-!.idea/
-.idea/*
-!.idea/runConfigurations/
-!.idea/compiler.xml
-!.idea/encodings.xml
-!.idea/modules.xml
-!.idea/misc.xml
-!.idea/vcs.xml
-!.idea/inspectionProfiles/
-
-# EXCLUDE personal/machine-specific IDEA files
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/usage.statistics.xml
-.idea/dictionaries/
-.idea/shelf/
-.idea/libraries/
-.idea/sonarlint/
-.idea/sonarIssues.xml
-.idea/markdown-navigator/
-.idea/markdown-navigator.xml
-.idea/httpRequests/
-.idea/caches/
-.idea/dynamic.xml
-.idea/uiDesigner.xml
-.idea/gradle.xml
-.idea/jarRepositories.xml
+# IntelliJ IDEA
+.idea/
 
 # IntelliJ IDEA module files that are auto-generated
 *.iml

@@ -51,20 +51,15 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8080/employees?name=Jose",
+					"raw": "http://localhost:8080/employees/Jose",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
-						"employees"
-					],
-					"query": [
-						{
-							"key": "name",
-							"value": "Jose"
-						}
+						"employees",
+						"Jose"
 					]
 				}
 			},
