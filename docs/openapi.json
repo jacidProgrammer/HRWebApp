@@ -1,0 +1,1095 @@
+{
+  "components" : {
+    "schemas" : {
+      "AlertDTO" : {
+        "description" : "Aggregated alert: no message content",
+        "properties" : {
+          "currentPositiveShare" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "department" : {
+            "type" : "string"
+          },
+          "employeeId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "feedbackCount" : {
+            "description" : "Feedback items in the last 30 days",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "previousPositiveShare" : {
+            "format" : "double",
+            "type" : "number"
+          }
+        },
+        "required" : [ "currentPositiveShare", "department", "employeeId", "feedbackCount", "name", "previousPositiveShare" ],
+        "type" : "object"
+      },
+      "DepartmentDTO" : {
+        "description" : "Headcount per department",
+        "properties" : {
+          "headcount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "headcount", "name" ],
+        "type" : "object"
+      },
+      "EmployeeDTO" : {
+        "description" : "An employee",
+        "properties" : {
+          "address" : {
+            "description" : "Only for managers and the employee themselves, otherwise null",
+            "example" : "Mainz, Germany",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "department" : {
+            "example" : "IT",
+            "type" : "string"
+          },
+          "email" : {
+            "example" : "jose@example.com",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "name" : {
+            "description" : "Display name",
+            "example" : "José Antonio Cid",
+            "type" : "string"
+          },
+          "role" : {
+            "description" : "Job title",
+            "example" : "Java Senior Backend",
+            "type" : "string"
+          },
+          "salary" : {
+            "description" : "Only for managers and the employee themselves, otherwise null",
+            "example" : 75600.0,
+            "format" : "double",
+            "nullable" : true,
+            "type" : "number"
+          },
+          "username" : {
+            "description" : "Keycloak username (lower case), never changes",
+            "example" : "jose",
+            "type" : "string"
+          }
+        },
+        "required" : [ "address", "createdAt", "department", "email", "id", "name", "role", "salary", "username" ],
+        "type" : "object"
+      },
+      "EmployeeRequestDTO" : {
+        "description" : "Employee to create (every field required) or update (see the operation for the rules)",
+        "properties" : {
+          "address" : {
+            "example" : "Mainz, Germany",
+            "type" : "string"
+          },
+          "department" : {
+            "example" : "IT",
+            "type" : "string"
+          },
+          "email" : {
+            "example" : "jose@example.com",
+            "type" : "string"
+          },
+          "name" : {
+            "example" : "José Antonio Cid",
+            "type" : "string"
+          },
+          "role" : {
+            "description" : "Job title",
+            "example" : "Java Senior Backend",
+            "type" : "string"
+          },
+          "salary" : {
+            "example" : 75600.0,
+            "format" : "double",
+            "type" : "number"
+          },
+          "username" : {
+            "description" : "Keycloak username: letters, digits, `. _ @ -`. Required on create, immutable afterwards",
+            "example" : "jose",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ErrorResponse" : {
+        "description" : "Error returned by the API",
+        "properties" : {
+          "code" : {
+            "description" : "HTTP status name",
+            "example" : "BAD_REQUEST",
+            "type" : "string"
+          },
+          "message" : {
+            "description" : "Human-readable explanation",
+            "example" : "message must contain 1 to 500 characters",
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "message" ],
+        "type" : "object"
+      },
+      "FeedbackDTO" : {
+        "description" : "A piece of peer feedback",
+        "properties" : {
+          "anonymous" : {
+            "type" : "boolean"
+          },
+          "authorId" : {
+            "description" : "Null for anonymous feedback (except for its author) and when the author was deleted",
+            "format" : "uuid",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "authorName" : {
+            "description" : "Null for anonymous feedback (except for its author) and when the author was deleted",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "message" : {
+            "example" : "Great facilitation of the retro!",
+            "type" : "string"
+          },
+          "recipientId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "recipientName" : {
+            "example" : "Louisa Becker",
+            "type" : "string"
+          },
+          "sentiment" : {
+            "$ref" : "#/components/schemas/SentimentDTO"
+          },
+          "value" : {
+            "description" : "Recognised company value",
+            "enum" : [ "TEAMWORK", "OWNERSHIP", "CRAFT", "CUSTOMER_FOCUS", "GROWTH" ],
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "anonymous", "authorId", "authorName", "createdAt", "id", "message", "recipientId", "recipientName", "sentiment", "value" ],
+        "type" : "object"
+      },
+      "FeedbackRequestDTO" : {
+        "description" : "Feedback to send",
+        "properties" : {
+          "anonymous" : {
+            "description" : "Hide the author from everybody but the author; defaults to false",
+            "nullable" : true,
+            "type" : "boolean"
+          },
+          "message" : {
+            "description" : "1 to 500 characters; surrounding whitespace is removed",
+            "example" : "Great facilitation of the retro!",
+            "maxLength" : 500,
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "recipientId" : {
+            "description" : "Id of the colleague the feedback is about (not the caller)",
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "value" : {
+            "description" : "Optional company value the feedback recognises",
+            "enum" : [ "TEAMWORK", "OWNERSHIP", "CRAFT", "CUSTOMER_FOCUS", "GROWTH" ],
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "message", "recipientId" ],
+        "type" : "object"
+      },
+      "FeedbackVolumeDTO" : {
+        "description" : "Feedback created this month, last month and in total",
+        "properties" : {
+          "lastMonth" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "thisMonth" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "total" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "lastMonth", "thisMonth", "total" ],
+        "type" : "object"
+      },
+      "RecognisedDTO" : {
+        "description" : "The 5 employees with most feedback received in the last 90 days",
+        "properties" : {
+          "count" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "department" : {
+            "type" : "string"
+          },
+          "employeeId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "positiveShare" : {
+            "description" : "Positive / analysed feedback, 0..1",
+            "format" : "double",
+            "type" : "number"
+          }
+        },
+        "required" : [ "count", "department", "employeeId", "name", "positiveShare" ],
+        "type" : "object"
+      },
+      "SentimentDTO" : {
+        "description" : "Sentiment of the message as classified by the model",
+        "nullable" : true,
+        "properties" : {
+          "label" : {
+            "enum" : [ "POSITIVE", "NEUTRAL", "NEGATIVE" ],
+            "type" : "string"
+          },
+          "score" : {
+            "description" : "Model confidence, 0..1",
+            "example" : 0.97,
+            "format" : "double",
+            "type" : "number"
+          }
+        },
+        "required" : [ "label", "score" ],
+        "type" : "object"
+      },
+      "SentimentShareDTO" : {
+        "description" : "Shares between 0 and 1, rounded to two decimals",
+        "properties" : {
+          "negative" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "neutral" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "notAnalysed" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "positive" : {
+            "format" : "double",
+            "type" : "number"
+          }
+        },
+        "required" : [ "negative", "neutral", "notAnalysed", "positive" ],
+        "type" : "object"
+      },
+      "SettingsDTO" : {
+        "description" : "Runtime settings",
+        "properties" : {
+          "sentimentAnalysisAvailable" : {
+            "description" : "The analysis is configured (a Hugging Face token is set); if false nothing is analysed",
+            "type" : "boolean"
+          },
+          "sentimentAnalysisEnabled" : {
+            "description" : "Managers want new feedback to be analysed (stored in the database)",
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "sentimentAnalysisAvailable", "sentimentAnalysisEnabled" ],
+        "type" : "object"
+      },
+      "SettingsRequestDTO" : {
+        "description" : "New settings",
+        "properties" : {
+          "sentimentAnalysisEnabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "sentimentAnalysisEnabled" ],
+        "type" : "object"
+      },
+      "StatsOverviewDTO" : {
+        "description" : "Manager dashboard figures",
+        "properties" : {
+          "alerts" : {
+            "description" : "Employees whose positive share in the last 30 days dropped by at least 0.25 compared with the 30 days before, with at least 3 analysed items in each window",
+            "items" : {
+              "$ref" : "#/components/schemas/AlertDTO"
+            },
+            "type" : "array"
+          },
+          "departments" : {
+            "description" : "Headcount per department",
+            "items" : {
+              "$ref" : "#/components/schemas/DepartmentDTO"
+            },
+            "type" : "array"
+          },
+          "feedback" : {
+            "$ref" : "#/components/schemas/FeedbackVolumeDTO"
+          },
+          "headcount" : {
+            "description" : "Number of employees",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "sentimentShare" : {
+            "$ref" : "#/components/schemas/SentimentShareDTO"
+          },
+          "topRecognised" : {
+            "description" : "The 5 employees with most feedback received in the last 90 days",
+            "items" : {
+              "$ref" : "#/components/schemas/RecognisedDTO"
+            },
+            "type" : "array"
+          },
+          "trend" : {
+            "description" : "One entry per month of the selected period, oldest first, zero-filled",
+            "items" : {
+              "$ref" : "#/components/schemas/TrendDTO"
+            },
+            "type" : "array"
+          },
+          "valueCounts" : {
+            "description" : "Every company value with its count in the selected period, most frequent first",
+            "items" : {
+              "$ref" : "#/components/schemas/ValueCountDTO"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "alerts", "departments", "feedback", "headcount", "sentimentShare", "topRecognised", "trend", "valueCounts" ],
+        "type" : "object"
+      },
+      "TrendDTO" : {
+        "description" : "One entry per month of the selected period, oldest first, zero-filled",
+        "properties" : {
+          "month" : {
+            "description" : "Calendar month (UTC)",
+            "example" : "2026-09",
+            "type" : "string"
+          },
+          "negative" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "neutral" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "notAnalysed" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "positive" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "month", "negative", "neutral", "notAnalysed", "positive" ],
+        "type" : "object"
+      },
+      "ValueCountDTO" : {
+        "description" : "Every company value with its count in the selected period, most frequent first",
+        "properties" : {
+          "count" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "value" : {
+            "enum" : [ "TEAMWORK", "OWNERSHIP", "CRAFT", "CUSTOMER_FOCUS", "GROWTH" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "count", "value" ],
+        "type" : "object"
+      }
+    },
+    "securitySchemes" : {
+      "bearerAuth" : {
+        "bearerFormat" : "JWT",
+        "description" : "Access token issued by Keycloak (realm hr-realm, client hr-api-login)",
+        "scheme" : "bearer",
+        "type" : "http"
+      }
+    }
+  },
+  "info" : {
+    "description" : "Peer recognition and HR insights. Employees send (optionally anonymous) feedback to colleagues; managers see aggregated insights and control the AI sentiment analysis.\n\nEvery endpoint needs a Keycloak access token (`Authorization: Bearer <token>`) of the `hr-realm` realm. Roles come from the realm roles `MANAGER` and `EMPLOYEE`. Errors have the body `{\"code\": \"...\", \"message\": \"...\"}`, except 401 and role-based 403 responses, which are produced by Spring Security without a body.",
+    "license" : {
+      "name" : "MIT",
+      "url" : "https://github.com/jacidProgrammer/HRWebApp/blob/main/LICENSE"
+    },
+    "title" : "HRWebApp API",
+    "version" : "2.0.0"
+  },
+  "openapi" : "3.0.1",
+  "paths" : {
+    "/employees" : {
+      "get" : {
+        "description" : "All employees. `salary` and `address` are null unless the caller is a manager or it is their own record.",
+        "operationId" : "getEmployees",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/EmployeeDTO"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "401" : {
+            "description" : "Missing, invalid or expired access token (no body)"
+          },
+          "403" : {
+            "description" : "The caller's role is not allowed to use this endpoint (no body)"
+          }
+        },
+        "summary" : "List employees",
+        "tags" : [ "Employees" ]
+      },
+      "post" : {
+        "description" : "Every field is required. `username` must match a Keycloak username and is stored in lower case.",
+        "operationId" : "createEmployee",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EmployeeRequestDTO"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EmployeeDTO"
+                }
+              }
+            },
+            "description" : "Created; the Location header points to the new employee"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Missing or invalid fields"
+          },
+          "401" : {
+            "description" : "Missing, invalid or expired access token (no body)"
+          },
+          "403" : {
+            "description" : "The caller's role is not allowed to use this endpoint (no body)"
+          },
+          "409" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "An employee with this username already exists"
+          }
+        },
+        "summary" : "Create an employee",
+        "tags" : [ "Employees" ]
+      }
+    },
+    "/employees/me" : {
+      "get" : {
+        "description" : "The employee linked to the token's `preferred_username`.",
+        "operationId" : "getCurrentEmployee",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EmployeeDTO"
+                }
+              }
+            },
+            "description" : "The caller's employee record"
+          },
+          "401" : {
+            "description" : "Missing, invalid or expired access token (no body)"
+          },
+          "403" : {
+            "description" : "The caller's role is not allowed to use this endpoint (no body)"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "The caller has no employee record (e.g. the manager demo user)"
+          }
+        },
+        "summary" : "Get the caller's employee record",
+        "tags" : [ "Employees" ]
+      }
+    },
+    "/employees/{id}" : {
+      "delete" : {
+        "description" : "Deletes the feedback about the employee and keeps the feedback they wrote, without author.",
+        "operationId" : "deleteEmployee",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Deleted"
+          },
+          "401" : {
+            "description" : "Missing, invalid or expired access token (no body)"
+          },
+          "403" : {
+            "description" : "The caller's role is not allowed to use this endpoint (no body)"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Employee not found"
+          }
+        },
+        "summary" : "Delete an employee",
+        "tags" : [ "Employees" ]
+      },
+      "get" : {
+        "description" : "Same field visibility as the list.",
+        "operationId" : "getEmployee",
+        "parameters" : [ {
+          "description" : "Employee id",
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EmployeeDTO"
+                }
+              }
+            },
+            "description" : "The employee"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "The id is not a UUID"
+          },
+          "401" : {
+            "description" : "Missing, invalid or expired access token (no body)"
+          },
+          "403" : {
+            "description" : "The caller's role is not allowed to use this endpoint (no body)"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Employee not found"
+          }
+        },
+        "summary" : "Get an employee",
+        "tags" : [ "Employees" ]
+      },
+      "put" : {
+        "description" : "Managers replace every field except `username` (which can never change). Employees can only update their own `email` and `address`; omitted fields are kept, other fields must be omitted or unchanged.",
+        "operationId" : "updateEmployee",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EmployeeRequestDTO"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EmployeeDTO"
+                }
+              }
+            },
+            "description" : "The updated employee"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Missing or invalid fields, or an attempt to change the username"
+          },
+          "401" : {
+            "description" : "Missing, invalid or expired access token (no body)"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "The caller's role is not allowed, or an employee updates someone else or a manager-only field"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Employee not found"
+          }
+        },
+        "summary" : "Update an employee",
+        "tags" : [ "Employees" ]
+      }
+    },
+    "/feedback" : {
+      "get" : {
+        "description" : "Newest first. Anonymous feedback has no author, for managers too.",
+        "operationId" : "searchFeedback",
+        "parameters" : [ {
+          "description" : "Only feedback about this employee",
+          "in" : "query",
+          "name" : "recipientId",
+          "required" : false,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "description" : "Only feedback about employees of this department (case-insensitive)",
+          "in" : "query",
+          "name" : "department",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Inclusive start: a date (`2026-09-01`, whole UTC day) or a date-time (`2026-09-01T10:15:30Z`)",
+          "in" : "query",
+          "name" : "from",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Inclusive end: a date (whole UTC day) or a date-time",
+          "in" : "query",
+          "name" : "to",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Sentiment label, or `NONE` for feedback that was not analysed",
+          "in" : "query",
+          "name" : "sentiment",
+          "required" : false,
+          "schema" : {
+            "enum" : [ "POSITIVE", "NEUTRAL", "NEGATIVE", "NONE" ],
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/FeedbackDTO"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "Matching feedback"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Invalid filter value"
+          },
+          "401" : {
+            "description" : "Missing, invalid or expired access token (no body)"
+          },
+          "403" : {
+            "description" : "The caller's role is not allowed to use this endpoint (no body)"
+          }
+        },
+        "summary" : "Search all feedback (managers)",
+        "tags" : [ "Feedback" ]
+      },
+      "post" : {
+        "description" : "The caller needs an employee record. The message (1 to 500 characters) is analysed for sentiment when managers enabled it and a Hugging Face token is configured; otherwise, or if the analysis fails, `sentiment` is null.",
+        "operationId" : "sendFeedback",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FeedbackRequestDTO"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FeedbackDTO"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Invalid message or value, missing recipient, or feedback to yourself"
+          },
+          "401" : {
+            "description" : "Missing, invalid or expired access token (no body)"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "The caller is not an employee or has no employee record"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Recipient not found"
+          }
+        },
+        "summary" : "Send feedback to a colleague",
+        "tags" : [ "Feedback" ]
+      }
+    },
+    "/feedback/received" : {
+      "get" : {
+        "description" : "Newest first. Anonymous feedback has no author.",
+        "operationId" : "getReceivedFeedback",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/FeedbackDTO"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "Feedback about the caller"
+          },
+          "401" : {
+            "description" : "Missing, invalid or expired access token (no body)"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "The caller is not an employee or has no employee record"
+          }
+        },
+        "summary" : "Feedback about the caller",
+        "tags" : [ "Feedback" ]
+      }
+    },
+    "/feedback/sent" : {
+      "get" : {
+        "description" : "Newest first, author always included.",
+        "operationId" : "getSentFeedback",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/FeedbackDTO"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "Feedback written by the caller"
+          },
+          "401" : {
+            "description" : "Missing, invalid or expired access token (no body)"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "The caller is not an employee or has no employee record"
+          }
+        },
+        "summary" : "Feedback written by the caller",
+        "tags" : [ "Feedback" ]
+      }
+    },
+    "/settings" : {
+      "get" : {
+        "description" : "Whether managers enabled the sentiment analysis and whether it is configured at all.",
+        "operationId" : "getSettings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SettingsDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "401" : {
+            "description" : "Missing, invalid or expired access token (no body)"
+          },
+          "403" : {
+            "description" : "The caller's role is not allowed to use this endpoint (no body)"
+          }
+        },
+        "summary" : "Get the settings",
+        "tags" : [ "Settings" ]
+      },
+      "put" : {
+        "description" : "While the analysis is disabled nothing is sent to the external model.",
+        "operationId" : "updateSettings",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SettingsRequestDTO"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SettingsDTO"
+                }
+              }
+            },
+            "description" : "The updated settings"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "sentimentAnalysisEnabled is missing"
+          },
+          "401" : {
+            "description" : "Missing, invalid or expired access token (no body)"
+          },
+          "403" : {
+            "description" : "The caller's role is not allowed to use this endpoint (no body)"
+          }
+        },
+        "summary" : "Update the settings (managers)",
+        "tags" : [ "Settings" ]
+      }
+    },
+    "/stats/overview" : {
+      "get" : {
+        "description" : "Headcount, feedback volume, sentiment share and monthly trend, recognised company values, the most recognised employees of the last 90 days and aggregated alerts when the share of positive feedback about someone drops. All months are UTC calendar months.",
+        "operationId" : "getOverview",
+        "parameters" : [ {
+          "description" : "Length of the trend period in calendar months (1..12)",
+          "in" : "query",
+          "name" : "months",
+          "required" : false,
+          "schema" : {
+            "default" : 6,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StatsOverviewDTO"
+                }
+              }
+            },
+            "description" : "The dashboard figures"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "months is outside 1..12"
+          },
+          "401" : {
+            "description" : "Missing, invalid or expired access token (no body)"
+          },
+          "403" : {
+            "description" : "The caller's role is not allowed to use this endpoint (no body)"
+          }
+        },
+        "summary" : "Dashboard overview (managers)",
+        "tags" : [ "Insights" ]
+      }
+    }
+  },
+  "security" : [ {
+    "bearerAuth" : [ ]
+  } ],
+  "servers" : [ {
+    "description" : "Local development",
+    "url" : "http://localhost:8080"
+  } ],
+  "tags" : [ {
+    "description" : "Employee directory. Salary and address are only visible to managers and to the employee themselves.",
+    "name" : "Employees"
+  }, {
+    "description" : "Peer recognition. The author of anonymous feedback is only ever returned to the author.",
+    "name" : "Feedback"
+  }, {
+    "description" : "Aggregated figures for managers; no message content.",
+    "name" : "Insights"
+  }, {
+    "description" : "Runtime switches managers control, such as the AI sentiment analysis.",
+    "name" : "Settings"
+  } ]
+}

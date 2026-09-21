@@ -14,11 +14,18 @@
     
     <groupId>dev.jacid</groupId>
     <artifactId>hr</artifactId>
-    <version>1.0.0</version>
+    <version>2.0.0</version>
     <packaging>jar</packaging>
     
     <name>HR</name>
-    <description>Simple HR application with Clean architecture</description>
+    <description>Peer recognition and HR insights API: Spring Boot, hexagonal architecture, Keycloak</description>
+    <url>https://github.com/jacidProgrammer/HRWebApp</url>
+    <licenses>
+        <license>
+            <name>MIT</name>
+            <url>https://opensource.org/licenses/MIT</url>
+        </license>
+    </licenses>
     
     <properties>
         <java.version>21</java.version>
@@ -78,6 +85,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <!-- /actuator/prometheus (see the Observability section of the README) -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
         <dependency>
             <groupId>org.mapstruct</groupId>
@@ -210,6 +222,28 @@
                                 </goals>
                             </execution>
                         </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!--
+            Regenerates the committed OpenAPI contract (docs/openapi.json) from the running application:
+            ./mvnw -Pupdate-openapi test
+            Without this profile, OpenApiContractTest fails when the committed file is out of date.
+        -->
+        <profile>
+            <id>update-openapi</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <test>OpenApiContractTest</test>
+                            <systemPropertyVariables>
+                                <openapi.update>true</openapi.update>
+                            </systemPropertyVariables>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>

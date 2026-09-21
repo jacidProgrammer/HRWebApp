@@ -1,13 +1,24 @@
+# Local environment. Host ports can be overridden with environment variables (or a .env file next to this file).
+#
+#   docker compose up -d                                   Keycloak + databases, for ./mvnw spring-boot:run
+#   docker compose --profile full up -d --build            + the API (this repo) and the UI (HRWebApp-UI main branch)
+#   docker compose --profile full --profile observability up -d --build
+#                                                          + Prometheus and Grafana
+#   docker compose --profile full --profile observability down -v    stop everything and delete the data
+#
+# All credentials in this file are demo values for local use only.
+
+name: hrwebapp
+
 services:
   login-postgres:
     image: postgres:15-alpine
-    container_name: hrApplication-login
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: keycloak
     ports:
-      - "5432:5432"
+      - "${KEYCLOAK_DB_PORT:-5432}:5432"
     volumes:
       - login-postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -18,13 +29,12 @@ services:
 
   hrapp-postgres:
     image: postgres:15-alpine
-    container_name: hrApplication-db
     environment:
       POSTGRES_DB: hrApplication
       POSTGRES_USER: hrApplication
       POSTGRES_PASSWORD: hrApplication
     ports:
-      - "5433:5432"
+      - "${HR_DB_PORT:-5433}:5432"
     volumes:
       - hrapp-postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -35,7 +45,6 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.7.4
-    container_name: keycloak
     # start-dev: HTTP, no hostname configuration; the issuer follows the URL used to reach Keycloak
     # (http://localhost:8082/realms/hr-realm). --import-realm imports the realm when it does not exist yet.
     command:
@@ -48,18 +57,101 @@ services:
       KC_DB_URL_DATABASE: keycloak
       KC_DB_USERNAME: keycloak
       KC_DB_PASSWORD: keycloak
+      KC_HEALTH_ENABLED: "true"
 
       # Temporary admin for the master realm (admin console), demo values only
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
     ports:
-      - "8082:8080"
+      - "${KEYCLOAK_PORT:-8082}:8080"
     depends_on:
       login-postgres:
         condition: service_healthy
     volumes:
       # Keycloak 26 only imports files named <realm>-realm.json
       - ./realm-export/hr-realm.json:/opt/keycloak/data/import/hr-realm-realm.json:ro
+    healthcheck:
+      # The image has no curl: plain HTTP request to the management port (9000) with bash
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q 'HTTP/1.1 200' <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  # ---- profile "full": the API built from this repository ----
+  api:
+    profiles: [full]
+    build: .
+    image: hrwebapp-api:local
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres,container
+      SPRING_DATASOURCE_URL: jdbc:postgresql://hrapp-postgres:5432/hrApplication
+      SPRING_DATASOURCE_USERNAME: hrApplication
+      SPRING_DATASOURCE_PASSWORD: hrApplication
+      # The browser gets its tokens from Keycloak at localhost, so that is the issuer the API must expect;
+      # the signing keys are fetched through the Docker network instead (localhost is the API container itself).
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:${KEYCLOAK_PORT:-8082}/realms/hr-realm
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/hr-realm/protocol/openid-connect/certs
+      CORS_ALLOWED_ORIGINS: http://localhost:${UI_PORT:-5173}
+      HUGGINGFACE_TOKEN: ${HUGGINGFACE_TOKEN:-}
+    ports:
+      - "${API_PORT:-8080}:8080"
+      # 8081 (actuator: health, Prometheus) stays on the internal network
+    depends_on:
+      hrapp-postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
+  # ---- profile "full": the UI built straight from the HRWebApp-UI repository ----
+  ui:
+    profiles: [full]
+    build:
+      context: https://github.com/jacidProgrammer/HRWebApp-UI.git#main
+    image: hrwebapp-ui:local
+    # Written to /config.js when the container starts; these URLs are used by the browser, hence localhost
+    environment:
+      API_BASE_URL: http://localhost:${API_PORT:-8080}
+      KEYCLOAK_URL: http://localhost:${KEYCLOAK_PORT:-8082}
+      KEYCLOAK_REALM: hr-realm
+      KEYCLOAK_CLIENT_ID: hr-api-login
+      AUTH_MODE: keycloak
+    ports:
+      # Keep 5173: it is the redirect URI and web origin registered for hr-api-login in the realm
+      - "${UI_PORT:-5173}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # ---- profile "observability": Prometheus and Grafana (scrape the api service of the "full" profile) ----
+  prometheus:
+    profiles: [observability]
+    image: prom/prometheus:v3.5.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+
+  grafana:
+    profiles: [observability]
+    image: grafana/grafana:12.1.1
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      # Read-only dashboards without logging in
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/hr-api.json
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
 
 volumes:
   login-postgres_data:

@@ -24,6 +24,8 @@ import org.junit.jupiter.api.Test;
 import dev.jacid.hrApplication.application.port.in.NewFeedback;
 import dev.jacid.hrApplication.application.port.out.CurrentUserProvider;
 import dev.jacid.hrApplication.application.port.out.EmployeeRepository;
+import dev.jacid.hrApplication.application.port.out.FeedbackMetrics;
+import dev.jacid.hrApplication.application.port.out.FeedbackMetrics.SentimentOutcome;
 import dev.jacid.hrApplication.application.port.out.FeedbackRepository;
 import dev.jacid.hrApplication.application.port.out.SentimentAnalyzer;
 import dev.jacid.hrApplication.application.port.out.SettingsRepository;
@@ -51,6 +53,7 @@ class FeedbackServiceImplTest {
     private SentimentAnalyzer sentimentAnalyzer;
     private SettingsRepository settingsRepository;
     private CurrentUserProvider currentUserProvider;
+    private FeedbackMetrics metrics;
     private FeedbackServiceImpl service;
 
     @BeforeEach
@@ -60,8 +63,9 @@ class FeedbackServiceImplTest {
         sentimentAnalyzer = mock(SentimentAnalyzer.class);
         settingsRepository = mock(SettingsRepository.class);
         currentUserProvider = mock(CurrentUserProvider.class);
+        metrics = mock(FeedbackMetrics.class);
         service = new FeedbackServiceImpl(employeeRepository, feedbackRepository, sentimentAnalyzer, settingsRepository,
-                currentUserProvider, () -> NOW);
+                currentUserProvider, () -> NOW, metrics);
         given(feedbackRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
         given(settingsRepository.load()).willReturn(new AppSettings(true));
     }
@@ -82,6 +86,8 @@ class FeedbackServiceImplTest {
         Feedback result = service.sendFeedback(new NewFeedback(JOSE.id(), "  " + MESSAGE + " ", FeedbackValue.CRAFT, true));
 
         assertThat(result).isEqualTo(new Feedback(null, JOSE, LOUISA, true, FeedbackValue.CRAFT, MESSAGE, POSITIVE, NOW));
+        then(metrics).should().feedbackCreated(result);
+        then(metrics).should().sentimentAnalysed(SentimentOutcome.ANALYSED, SentimentLabel.POSITIVE);
     }
 
     @Test
@@ -94,6 +100,7 @@ class FeedbackServiceImplTest {
 
         assertThat(result.sentiment()).isNull();
         then(sentimentAnalyzer).shouldHaveNoInteractions();
+        then(metrics).should().sentimentAnalysed(SentimentOutcome.DISABLED, null);
     }
 
     @Test
@@ -101,8 +108,25 @@ class FeedbackServiceImplTest {
         callerIsLouisa();
         given(employeeRepository.findById(JOSE.id())).willReturn(Optional.of(JOSE));
         given(sentimentAnalyzer.analyze(MESSAGE)).willReturn(Optional.empty());
+        given(sentimentAnalyzer.isAvailable()).willReturn(true);
 
-        assertThat(service.sendFeedback(new NewFeedback(JOSE.id(), MESSAGE, null, false)).sentiment()).isNull();
+        Feedback result = service.sendFeedback(new NewFeedback(JOSE.id(), MESSAGE, null, false));
+
+        assertThat(result.sentiment()).isNull();
+        then(metrics).should().sentimentAnalysed(SentimentOutcome.FAILED, null);
+        then(metrics).should().feedbackCreated(result);
+    }
+
+    @Test
+    void feedbackWithoutAConfiguredAnalyzerIsCountedAsUnavailable() {
+        callerIsLouisa();
+        given(employeeRepository.findById(JOSE.id())).willReturn(Optional.of(JOSE));
+        given(sentimentAnalyzer.analyze(MESSAGE)).willReturn(Optional.empty());
+        given(sentimentAnalyzer.isAvailable()).willReturn(false);
+
+        service.sendFeedback(new NewFeedback(JOSE.id(), MESSAGE, null, false));
+
+        then(metrics).should().sentimentAnalysed(SentimentOutcome.UNAVAILABLE, null);
     }
 
     @Test
@@ -115,6 +139,7 @@ class FeedbackServiceImplTest {
                 .hasMessage("You cannot send feedback to yourself");
         then(feedbackRepository).should(never()).save(any());
         then(sentimentAnalyzer).shouldHaveNoInteractions();
+        then(metrics).shouldHaveNoInteractions();
     }
 
     @Test

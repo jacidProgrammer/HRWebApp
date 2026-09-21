@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import dev.jacid.hrApplication.adapter.in.http.dto.ErrorResponse;
 import dev.jacid.hrApplication.domain.exception.EmployeeAlreadyExistsException;
 import dev.jacid.hrApplication.domain.exception.EmployeeNotFoundException;
 import dev.jacid.hrApplication.domain.exception.InvalidEmployeeDataException;

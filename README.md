@@ -1,298 +1,305 @@
 # HRWebApp
 
 [![CI](https://github.com/jacidProgrammer/HRWebApp/actions/workflows/ci.yml/badge.svg)](https://github.com/jacidProgrammer/HRWebApp/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/jacidProgrammer/HRWebApp/actions/workflows/codeql.yml/badge.svg)](https://github.com/jacidProgrammer/HRWebApp/actions/workflows/codeql.yml)
+[![Coverage](https://raw.githubusercontent.com/jacidProgrammer/HRWebApp/badges/jacoco.svg)](https://github.com/jacidProgrammer/HRWebApp/actions/workflows/ci.yml)
+[![Java 21](https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/21/)
+[![Spring Boot 3.5](https://img.shields.io/badge/Spring%20Boot-3.5-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A small HR backend built with Spring Boot and a hexagonal (ports and adapters) architecture.
-It manages employees and peer feedback, secures every endpoint with Keycloak-issued JWTs,
-enriches feedback with a sentiment score from the Hugging Face inference API and aggregates it
-into a manager dashboard.
+**A peer-recognition and HR-insights API with privacy built in: Spring Boot 3.5 on Java 21, hexagonal architecture,
+Keycloak-secured, with AI sentiment analysis that degrades gracefully.**
 
-The React frontend lives in a separate repository: [HRWebApp-UI](https://github.com/jacidProgrammer/HRWebApp-UI)
-(Keycloak login with PKCE, role-aware employee directory, profile editing, feedback and the manager dashboard).
+Employees recognise colleagues (optionally anonymously) for company values; managers get a dashboard with trends and
+aggregated alerts, and decide whether the AI sentiment analysis runs at all. The React frontend lives in
+[HRWebApp-UI](https://github.com/jacidProgrammer/HRWebApp-UI).
 
-## Features
+| Manager dashboard | Giving recognition | Employee profile (dark mode) |
+|---|---|---|
+| ![Manager dashboard](https://raw.githubusercontent.com/jacidProgrammer/HRWebApp-UI/main/docs/dashboard-light.png) | ![Recognition form](https://raw.githubusercontent.com/jacidProgrammer/HRWebApp-UI/main/docs/recognition-light.png) | ![Employee profile](https://raw.githubusercontent.com/jacidProgrammer/HRWebApp-UI/main/docs/person-dark.png) |
 
-- **Employees with role-based data visibility**
-  - Each employee is linked to a Keycloak user through `username` (compared case-insensitively with the
-    token's `preferred_username`). `name` is only a display name: it can change and need not be unique.
-  - `MANAGER` can list, read, create, update and delete employees and always sees every field.
-  - `EMPLOYEE` can list and read employees, but `salary` and `address` are only returned for their own
-    record. They can update only their own contact details (email, address).
-- **Peer feedback**
-  - Employees send feedback to a colleague (never to themselves), optionally recognising a company value
-    (`TEAMWORK`, `OWNERSHIP`, `CRAFT`, `CUSTOMER_FOCUS`, `GROWTH`) and optionally **anonymously**.
-  - Employees read the feedback they received and the feedback they sent; they cannot list feedback about
-    other people. Managers read and filter all feedback. The author of anonymous feedback is stored (to
-    enforce the rules) but only ever returned to the author.
-- **Sentiment analysis** of the feedback message with a Hugging Face model (default
-  `cardiffnlp/twitter-roberta-base-sentiment-latest`), stored as `{ "label": "POSITIVE|NEUTRAL|NEGATIVE", "score": 0.97 }`.
-  Managers can switch it off at runtime (`PUT /settings`); without a token, when switched off or when the API
-  fails, feedback is stored with `sentiment: null`.
-- **Manager dashboard** (`GET /stats/overview`): headcount per department, feedback volume, sentiment share and
-  monthly trend, recognised company values, most recognised employees and alerts when the share of positive
-  feedback about someone drops.
-- **Security**: OAuth2 resource server; Keycloak realm roles mapped to Spring roles; method-level
-  authorization with `@PreAuthorize`. Only the API docs, `/public/**` and `/actuator/health` are
-  public (plus the H2 console in the `h2` profile).
-- **OpenAPI docs** via springdoc at `/swagger-ui.html`.
+## Try it
+
+**Live demo, nothing to install:** <https://jacidprogrammer.github.io/HRWebApp-UI/>. The UI runs in mock mode there,
+with an in-browser fake of this API.
+
+**The real thing, one command** (needs Docker; builds this API and the UI straight from its Git repository):
+
+```bash
+docker compose --profile full up -d --build
+```
+
+| What               | Where                                            | Credentials                                  |
+|--------------------|--------------------------------------------------|----------------------------------------------|
+| UI                 | <http://localhost:5173>                          | `manager`, `jose`, `louisa`, `maria`, `lukas` / `1234` |
+| API + Swagger UI   | <http://localhost:8080/swagger-ui.html>          | bearer token from Keycloak                   |
+| Keycloak           | <http://localhost:8082>                          | admin console `admin` / `admin`              |
+| Prometheus, Grafana | <http://localhost:9090>, <http://localhost:3000> | with `--profile observability`; Grafana `admin` / `admin` |
+
+Stop it with `docker compose --profile full down` (add `-v` to delete the data). Host ports can be changed with
+`API_PORT`, `KEYCLOAK_PORT`, `HR_DB_PORT`, `KEYCLOAK_DB_PORT`, `PROMETHEUS_PORT` and `GRAFANA_PORT`; keep the UI on
+5173, the redirect URI registered in the Keycloak realm. Set `HUGGINGFACE_TOKEN` to get real sentiment analysis;
+without it everything works and new feedback is stored without sentiment. All credentials are local demo values.
+
+## Highlights
+
+- **Recognition with privacy by design.** Anonymous feedback stays anonymous for managers too, alerts are aggregated
+  and need a minimum sample, employees only see what concerns them ([ADR 0003](docs/adr/0003-anonymous-feedback-privacy-by-design.md)).
+- **AI that is optional.** Sentiment analysis (Hugging Face) sits behind a port that never fails a request; managers
+  can switch it off at runtime, and then nothing leaves the system ([ADR 0005](docs/adr/0005-sentiment-analysis-behind-a-port.md)).
+- **Manager insights.** Headcount, feedback volume, monthly sentiment trend, recognised values, most recognised people
+  and "positive share dropped" alerts in one `GET /stats/overview`.
+- **Security.** Keycloak (OIDC, PKCE for the SPA), stateless JWT resource server, deny by default, role checks with
+  `@PreAuthorize`, field-level visibility for salary and address ([ADR 0002](docs/adr/0002-keycloak-jwt-resource-server.md)).
+- **A contract, not a guess.** The OpenAPI document is committed and checked in CI; the UI generates its TypeScript
+  types from it ([ADR 0006](docs/adr/0006-openapi-contract-between-repos.md)).
+- **Production habits.** Flyway migrations, layered non-root Docker image, health probes, Prometheus metrics with
+  business counters, JSON logs with request correlation ids, CodeQL, Dependabot, 200+ tests including
+  Testcontainers PostgreSQL.
 
 ## Architecture
 
-```
-dev.jacid.hrApplication
-├── domain
-│   ├── model               Employee, Feedback, Sentiment, AppSettings, filters and dashboard records (plain Java)
-│   └── service             EmployeeUpdatePolicy, StatsCalculator (dashboard aggregation, no I/O)
-├── application
-│   ├── port.in             EmployeesUseCases, FeedbackUseCases, StatsUseCases, SettingsUseCases
-│   ├── port.out            EmployeeRepository, FeedbackRepository, SettingsRepository, SentimentAnalyzer,
-│   │                       CurrentUserProvider, TimeProvider
-│   └── services            use case implementations (visibility rules, sentiment gate)
-├── adapter
-│   ├── in.http             REST controllers, JSON DTOs and their MapStruct mappers
-│   ├── out.persistence     Spring Data JPA entities/repositories implementing the repository ports
-│   └── out.ai              Hugging Face client implementing SentimentAnalyzer
-└── infrastructure          security (Keycloak JWT), clock, demo data seeder, HTTP client config, error handling
-```
-
 ```mermaid
 flowchart LR
-    HTTP[adapter.in.http] --> IN[application.port.in]
-    IN --> SVC[application.services]
-    SVC --> OUT[application.port.out]
-    SVC --> DOM[domain]
-    JPA[adapter.out.persistence] -. implements .-> OUT
-    AI[adapter.out.ai] -. implements .-> OUT
-    INF[infrastructure] -. implements .-> OUT
+    Browser["Browser<br/>HRWebApp-UI (React SPA)"]
+    KC["Keycloak<br/>realm hr-realm"]
+    PG[("PostgreSQL")]
+    HF["Hugging Face<br/>inference API"]
+    Prom["Prometheus / Grafana"]
+
+    subgraph API["HR API (Spring Boot)"]
+        direction LR
+        subgraph IN["Inbound adapters"]
+            HTTP["adapter.in.http<br/>REST controllers, DTOs"]
+        end
+        subgraph CORE["Application core"]
+            PIN["port.in<br/>use cases"]
+            SVC["application.services"]
+            DOM["domain<br/>models and policies"]
+            POUT["port.out<br/>repositories, SentimentAnalyzer,<br/>FeedbackMetrics, clock"]
+        end
+        subgraph OUT["Outbound adapters"]
+            JPA["adapter.out.persistence<br/>JPA + Flyway"]
+            AI["adapter.out.ai<br/>Hugging Face client"]
+            MET["adapter.out.metrics<br/>Micrometer"]
+        end
+        HTTP --> PIN --> SVC --> DOM
+        SVC --> POUT
+        JPA -.->|implements| POUT
+        AI -.->|implements| POUT
+        MET -.->|implements| POUT
+    end
+
+    Browser -->|"login (OIDC + PKCE)"| KC
+    Browser -->|"REST + Bearer JWT"| HTTP
+    HTTP -.->|"JWKS (signature keys)"| KC
+    JPA --> PG
+    AI -->|"message text only"| HF
+    Prom -->|"scrape /actuator/prometheus"| MET
 ```
 
-The services only talk to ports and domain objects. The web DTOs and JPA entities stay in their
-adapters and are converted with MapStruct, so the JSON contract and the database schema can change
-independently of the use cases.
+The services only see ports and domain objects; web DTOs and JPA entities stay in their adapters and are mapped with
+MapStruct, so the JSON contract, the schema and the external API can change independently of the use cases
+([ADR 0001](docs/adr/0001-hexagonal-architecture.md)).
+
+```
+dev.jacid.hrApplication
+├── domain                 Employee, Feedback, Sentiment, AppSettings, dashboard records; EmployeeUpdatePolicy, StatsCalculator
+├── application
+│   ├── port.in            EmployeesUseCases, FeedbackUseCases, StatsUseCases, SettingsUseCases
+│   ├── port.out           EmployeeRepository, FeedbackRepository, SettingsRepository, SentimentAnalyzer,
+│   │                      FeedbackMetrics, CurrentUserProvider, TimeProvider
+│   └── services           use case implementations (visibility rules, sentiment gate)
+├── adapter
+│   ├── in.http            REST controllers, DTOs, MapStruct mappers, OpenAPI annotations
+│   ├── out.persistence    Spring Data JPA entities and repositories
+│   ├── out.ai             Hugging Face client
+│   └── out.metrics        Micrometer counters
+└── infrastructure         security (Keycloak JWT), request id filter, OpenAPI, clock, demo data seeder, error handling
+```
+
+### Giving recognition
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor E as Employee (browser)
+    participant KC as Keycloak
+    participant C as FeedbackController
+    participant S as FeedbackServiceImpl
+    participant SA as SentimentAnalyzer (Hugging Face adapter)
+    participant R as FeedbackRepository (JPA adapter)
+
+    E->>KC: sign in (authorization code + PKCE)
+    KC-->>E: access token (roles in realm_access)
+    E->>C: POST /feedback {recipientId, message, value, anonymous}<br/>Authorization: Bearer ...
+    Note over C: JWT signature and issuer checked,<br/>@PreAuthorize("hasRole('EMPLOYEE')")
+    C->>S: sendFeedback(NewFeedback)
+    S->>S: validate message, resolve caller and recipient,<br/>reject feedback to yourself
+    alt analysis enabled by managers and token configured
+        S->>SA: analyze(message text only)
+        SA-->>S: Sentiment(POSITIVE, 0.97), or empty on error/timeout
+    else disabled or not configured
+        Note over S: nothing leaves the system
+    end
+    S->>R: save(feedback, sentiment or null)
+    S->>S: count hr_feedback_submitted_total, hr_sentiment_analysis_total
+    S-->>C: Feedback
+    C-->>E: 201 Created (author hidden from everybody else if anonymous)
+```
 
 ## Tech stack
 
-- Java 21, Spring Boot 3.5 (Web, Security, OAuth2 Resource Server, Data JPA, Validation, Actuator)
-- Keycloak 26 as identity provider
-- PostgreSQL 15, H2 for local development, Flyway migrations
-- MapStruct, Lombok
-- Spring `RestClient` for the Hugging Face inference API
-- springdoc-openapi
+- Java 21, Spring Boot 3.5: Web, Security, OAuth2 Resource Server, Data JPA, Validation, Actuator
+- Keycloak 26 (OIDC), PostgreSQL 15 (H2 for quick local runs), Flyway
+- MapStruct, Lombok, Spring `RestClient` for the Hugging Face inference API
+- springdoc-openapi, Micrometer + Prometheus, Grafana, ECS structured logging
 - JUnit 5, Mockito, MockMvc, Spring Security Test, Testcontainers, JaCoCo
-- GitHub Actions
+- Docker, GitHub Actions, CodeQL, Dependabot
 
-## Running locally
+## Developing locally
 
-Requirements: JDK 21 and Docker. Maven is provided by the wrapper (`./mvnw`).
+Requirements: JDK 21 and Docker. Maven comes with the wrapper (`./mvnw`).
 
-1. **Start Keycloak and the databases**
+1. **Start Keycloak and the databases** (no profile: infrastructure only):
 
    ```bash
    docker compose up -d
    ```
 
-   This starts Keycloak 26 on `http://localhost:8082` (admin console: `admin` / `admin`), its own
-   PostgreSQL, and the application database on port `5433`. Keycloak imports the `hr-realm` realm
-   from [`realm-export/hr-realm.json`](realm-export/hr-realm.json) on startup. The realm defines:
+   Keycloak runs on `http://localhost:8082` and imports the `hr-realm` realm from
+   [`realm-export/hr-realm.json`](realm-export/hr-realm.json) the first time. The realm has the roles `MANAGER` and
+   `EMPLOYEE`, the public client `hr-api-login` (authorization code + PKCE for the UI on `http://localhost:5173`,
+   plus the password grant for Postman) and these demo users, all with password `1234`:
 
-   - the realm roles `MANAGER` and `EMPLOYEE`, which reach the API in the token's `realm_access.roles` claim;
-   - the public client `hr-api-login`: authorization code flow with PKCE (S256) for the
-     [HRWebApp-UI](https://github.com/jacidProgrammer/HRWebApp-UI) single-page app (redirect URIs
-     `http://localhost:5173/*`, web origin `http://localhost:5173`), plus the password grant used by the
-     Postman collection;
-   - the demo users (password `1234` for all of them). Their usernames match the `username` of the demo
-     employees:
+   | User      | Role       | Employee record          |
+   |-----------|------------|--------------------------|
+   | `manager` | `MANAGER`  | none                     |
+   | `jose`    | `EMPLOYEE` | José Antonio Cid (IT)    |
+   | `louisa`  | `EMPLOYEE` | Louisa Becker (IT)       |
+   | `maria`   | `EMPLOYEE` | María García (Sales)     |
+   | `lukas`   | `EMPLOYEE` | Lukas Schneider (IT)     |
 
-     | User      | Role       | Employee record                  |
-     |-----------|------------|----------------------------------|
-     | `manager` | `MANAGER`  | none                             |
-     | `jose`    | `EMPLOYEE` | José Antonio Cid (IT)            |
-     | `louisa`  | `EMPLOYEE` | Louisa Becker (IT)               |
-     | `maria`   | `EMPLOYEE` | María García (Sales)             |
-     | `lukas`   | `EMPLOYEE` | Lukas Schneider (IT)             |
+   > Coming from 1.x (Keycloak 22, numeric ids)? Recreate both databases: `docker compose down -v && docker compose up -d`.
 
-   Keycloak only imports the realm when it does not exist yet.
-
-   > **Upgrading from the previous version** (Keycloak 22, numeric ids, names as identity): both databases
-   > must be recreated, because the realm changed and the application schema is now managed by Flyway.
-   > Run `docker compose down -v && docker compose up -d`.
-
-   > The user passwords and admin credentials in `docker-compose.yml`, the realm
-   > export and the Postman collection are **demo values for local development only**. Replace them
-   > before running this anywhere else.
-
-2. **(Optional) Enable sentiment analysis** with a Hugging Face access token. The token is only
-   read from the environment and is never stored in the repository:
+2. **Run the API** on `http://localhost:8080`:
 
    ```bash
-   export HUGGINGFACE_TOKEN=hf_xxx
+   ./mvnw spring-boot:run                                        # h2: in-memory, fresh demo data on every start
+   ./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres    # PostgreSQL on localhost:5433, data survives restarts
    ```
 
-   `GET /settings` reports whether a token is configured (`sentimentAnalysisAvailable`) and whether managers
-   enabled the analysis (`sentimentAnalysisEnabled`, stored in the database, enabled by default).
+   Flyway applies [`src/main/resources/db/migration`](src/main/resources/db/migration) and Hibernate only validates
+   the schema. The demo data (12 employees, 50 feedback items over the last six months, one sentiment alert) is
+   generated relative to today and only inserted into an empty database; `app.seed.demo-data=false` turns it off
+   (the `prod` build does) ([ADR 0004](docs/adr/0004-flyway-and-java-demo-seeder.md)).
 
-3. **Run the application** on `http://localhost:8080` with one of the two database profiles:
+3. **Optional:** `export HUGGINGFACE_TOKEN=hf_xxx` before starting enables sentiment analysis. The token is only read
+   from the environment.
 
-   | Profile          | Database                   | Data lifecycle                                                                                      |
-   |------------------|----------------------------|-----------------------------------------------------------------------------------------------------|
-   | `h2` (default)   | in-memory H2               | Created by Flyway and filled with demo data on every start, lost on shutdown. H2 console at `/h2-console`. |
-   | `postgres`       | `hrapp-postgres` container | Flyway applies pending migrations on startup; the demo data is only inserted while the `employees` table is empty, so data survives restarts. |
+4. **Call it.** Import [`src/main/resources/HR.postman_collection.json`](src/main/resources/HR.postman_collection.json)
+   into Postman, set the `username` variable and send the `Token` request; or open Swagger UI and paste a token into
+   **Authorize**. To run the UI from source, follow the
+   [HRWebApp-UI README](https://github.com/jacidProgrammer/HRWebApp-UI#running-it-with-the-backend). Allowed browser
+   origins are configured with `CORS_ALLOWED_ORIGINS` (default `http://localhost:5173`).
 
-   ```bash
-   ./mvnw spring-boot:run                                              # h2
-   ./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres          # PostgreSQL
-   ```
+### How the containerised stack handles tokens
 
-   The schema lives in [`src/main/resources/db/migration`](src/main/resources/db/migration) (portable SQL for
-   PostgreSQL and H2); Hibernate only validates it (`ddl-auto=validate`). Schema changes are new
-   `V<n>__*.sql` files. The demo data (`DemoDataSeeder`: 12 employees in IT, Sales, People and Finance, 50
-   feedback items over the last six months with pre-set sentiment, a few anonymous, one sentiment alert) is
-   generated relative to the current date. Turn it off with `app.seed.demo-data=false` (the `prod` build does).
+The browser reaches Keycloak at `http://localhost:8082`, so tokens carry `iss=http://localhost:8082/realms/hr-realm`.
+Inside Docker, `localhost` is the API container itself, so the `api` service validates the issuer against the
+browser URL but downloads the signing keys over the Docker network:
 
-4. **Get a token and call the API.** Import
-   [`src/main/resources/HR.postman_collection.json`](src/main/resources/HR.postman_collection.json)
-   into Postman, set the collection variable `username` (`manager`, `jose`, ...), send the `Token` request
-   (password grant against `hr-realm`); it stores the access token and every other request uses it.
-
-5. **(Optional) Run the frontend.** Follow the [HRWebApp-UI README](https://github.com/jacidProgrammer/HRWebApp-UI#running-it-with-the-backend):
-   `npm install && npm run dev` serves it on `http://localhost:5173` and signs you in through Keycloak.
-
-   Browsers may only call the API from allowed origins. CORS is configured with `app.cors.allowed-origins`
-   (a comma-separated list, default `http://localhost:5173`), which you can override with an environment variable:
-
-   ```bash
-   CORS_ALLOWED_ORIGINS=https://hr.example.com,http://localhost:5173 ./mvnw spring-boot:run
-   ```
-
-## API overview
-
-All endpoints require `Authorization: Bearer <token>`. Ids are UUIDs, dates are ISO-8601 UTC strings
-(`2026-09-21T10:15:30Z`).
-
-### Employees
-
-```json
-{ "id": "uuid", "username": "jose", "name": "José Antonio Cid", "department": "IT", "role": "Java Senior Backend",
-  "email": "jose@example.com", "salary": 75600.0, "address": "Mainz, Germany", "createdAt": "2025-08-17T19:20:12Z" }
+```yaml
+SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8082/realms/hr-realm
+SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/hr-realm/protocol/openid-connect/certs
 ```
 
-| Method | Path               | Role                  | Description                                                                 |
-|--------|--------------------|-----------------------|-----------------------------------------------------------------------------|
-| GET    | `/employees`       | `MANAGER`, `EMPLOYEE` | All employees; `salary`/`address` are `null` unless manager or own record   |
-| GET    | `/employees/me`    | `MANAGER`, `EMPLOYEE` | The employee linked to the caller's username; `404` if there is none        |
-| GET    | `/employees/{id}`  | `MANAGER`, `EMPLOYEE` | One employee (same visibility rule)                                         |
-| POST   | `/employees`       | `MANAGER`             | Create: `username, name, department, role, email, salary, address` (all required); `201` |
-| PUT    | `/employees/{id}`  | `MANAGER`, `EMPLOYEE` | Update (rules below)                                                        |
-| DELETE | `/employees/{id}`  | `MANAGER`             | Delete; `204`                                                               |
+The UI image writes `/config.js` at startup from `API_BASE_URL`, `KEYCLOAK_URL`, `KEYCLOAK_REALM` and
+`KEYCLOAK_CLIENT_ID`, so the same image works against any backend.
 
-- `username` is unique (case-insensitive, stored in lower case), must look like a Keycloak username
-  (letters, digits, `. _ @ -`) and never changes.
-- A manager replaces every field except `username`, so the body must contain all of them. A `username` in the
-  body is only accepted if it is the current one (otherwise `400`).
-- An employee can only update their own record and only `email` and `address` (omitted values are kept).
-  Other fields may be omitted or sent unchanged; changing them returns `403`, as does updating someone else.
-- **Deleting an employee** deletes the feedback **about** them and keeps the feedback they **wrote** with
-  `authorId`/`authorName` = `null`, so their colleagues keep what they received.
+## API
 
-### Feedback
+| Area      | Endpoints                                                                 | Roles                   |
+|-----------|---------------------------------------------------------------------------|-------------------------|
+| Employees | `GET /employees`, `GET /employees/me`, `GET/PUT /employees/{id}`, `POST /employees`, `DELETE /employees/{id}` | read: both; write: `MANAGER` (employees edit their own contact details) |
+| Feedback  | `POST /feedback`, `GET /feedback/received`, `GET /feedback/sent`          | `EMPLOYEE`              |
+| Feedback  | `GET /feedback?recipientId&department&from&to&sentiment`                  | `MANAGER`               |
+| Insights  | `GET /stats/overview?months=6`                                            | `MANAGER`               |
+| Settings  | `GET /settings`, `PUT /settings`                                          | read: both; write: `MANAGER` |
 
-```json
-{ "id": "uuid", "recipientId": "uuid", "recipientName": "Louisa Becker", "authorId": "uuid", "authorName": "José Antonio Cid",
-  "anonymous": false, "value": "TEAMWORK", "message": "Great facilitation!",
-  "sentiment": { "label": "POSITIVE", "score": 0.97 }, "createdAt": "2026-09-21T10:15:30Z" }
-```
+- **Reference:** [`docs/api.md`](docs/api.md) (rules, payloads, dashboard fields, errors).
+- **Contract:** [`docs/openapi.json`](docs/openapi.json), also served at `/v3/api-docs` with Swagger UI at
+  `/swagger-ui.html`. `OpenApiContractTest` fails the build when the committed file differs from what the application
+  serves; after an intended API change run `./mvnw -Pupdate-openapi test` and commit the file. The UI generates its
+  types from the raw URL of this file on `main`.
 
-| Method | Path                 | Role       | Description                                                                          |
-|--------|----------------------|------------|--------------------------------------------------------------------------------------|
-| POST   | `/feedback`          | `EMPLOYEE` | Send `{ "recipientId", "message", "value"?, "anonymous"? }`; `201`                   |
-| GET    | `/feedback/received` | `EMPLOYEE` | Feedback about the caller, newest first                                              |
-| GET    | `/feedback/sent`     | `EMPLOYEE` | Feedback written by the caller, newest first (author always filled in)               |
-| GET    | `/feedback`          | `MANAGER`  | All feedback, newest first. Optional filters below                                   |
+## Observability
 
-- The caller of `POST /feedback`, `/received` and `/sent` needs an employee record (`403` otherwise).
-  `message` must have 1 to 500 characters (surrounding whitespace is removed), `value` is optional,
-  `anonymous` defaults to `false`. Feedback to yourself is `400`, an unknown recipient `404`.
-- `authorId`/`authorName` are `null` for anonymous feedback, for everybody including managers. The only
-  exception is the author: `/feedback/sent` and the `POST` response show it.
-- `sentiment` is `null` when the analysis is disabled, failed, or no token is configured.
-- Filters of `GET /feedback`: `recipientId`, `department` (case-insensitive), `from` and `to` (inclusive; a date
-  such as `2026-09-01` means the whole UTC day, or a date-time such as `2026-09-01T10:15:30Z`), `sentiment`
-  (`POSITIVE`, `NEUTRAL`, `NEGATIVE`, or `NONE` for feedback without sentiment).
-
-### Dashboard and settings
-
-| Method | Path              | Role                  | Description                                                                 |
-|--------|-------------------|-----------------------|-----------------------------------------------------------------------------|
-| GET    | `/stats/overview` | `MANAGER`             | Dashboard figures; optional `months` (default 6, 1..12)                     |
-| GET    | `/settings`       | `MANAGER`, `EMPLOYEE` | `{ "sentimentAnalysisEnabled": true, "sentimentAnalysisAvailable": false }` |
-| PUT    | `/settings`       | `MANAGER`             | `{ "sentimentAnalysisEnabled": false }`, returns the settings               |
-
-`GET /stats/overview` (all months are UTC calendar months):
-
-| Field            | Meaning                                                                                                   |
-|------------------|-----------------------------------------------------------------------------------------------------------|
-| `headcount`, `departments` | Number of employees, in total and per department                                                |
-| `feedback`       | Feedback created this month, last month, and in total                                                     |
-| `sentimentShare` | Share (0..1, two decimals) of positive / neutral / negative / not analysed feedback in the selected `months` |
-| `trend`          | One entry per month of the selected period, oldest first, zero-filled                                     |
-| `valueCounts`    | Every company value with the number of feedback items recognising it in the selected period, most frequent first |
-| `topRecognised`  | The 5 employees with most feedback received in the last 90 days, with their positive share (positive / analysed) |
-| `alerts`         | Employees whose positive share in the last 30 days dropped by ≥ 0.25 compared with the 30 days before, with ≥ 3 analysed items in each window. `feedbackCount` is the number of items in the last 30 days. No message content |
-
-### Errors
-
-Errors are returned as `{"code": "...", "message": "..."}`:
-
-| Status | When                                                                                          |
-|--------|-----------------------------------------------------------------------------------------------|
-| 400    | Missing required fields, changing a username, invalid feedback (message length, feedback to yourself, unknown value), malformed ids, JSON or filters, `months` outside 1..12 |
-| 401    | Missing or invalid token                                                                      |
-| 403    | Role not allowed for the endpoint, updating another employee or a manager-only field, sending/reading feedback without an employee record |
-| 404    | Employee not found, `/employees/me` without employee record                                   |
-| 409    | Creating an employee whose username already exists                                            |
-
-Interactive documentation: `http://localhost:8080/swagger-ui.html` (OpenAPI JSON at `/v3/api-docs`).
+- **Health:** `/actuator/health` (public) with `liveness` and `readiness` groups; the Docker image's health check uses readiness.
+- **Metrics:** `/actuator/prometheus` with HTTP request rate, latency histograms and status, JVM, HikariCP, plus
+  business counters `hr_feedback_submitted_total{anonymous, value}` and
+  `hr_sentiment_analysis_total{outcome=analysed|disabled|unavailable|failed, label}`. Tags never contain ids, names or text.
+  - In containers (profile `container`) the actuator runs on a separate port, **8081**, that compose does not publish:
+    Prometheus scrapes it over the Docker network without a token, while the published port 8080 serves only the API.
+  - When run with `./mvnw` (single port) the endpoint requires a bearer token like any other actuator endpoint.
+- **Logs:** plain text locally; one [ECS](https://www.elastic.co/guide/en/ecs/current/) JSON object per line in
+  containers (`logging.structured.format.console=ecs`).
+- **Correlation id:** every response carries `X-Request-Id`; an incoming value (up to 64 characters of
+  `[A-Za-z0-9._:-]`) is reused, otherwise a UUID is generated. It is in the MDC as `requestId`, so it appears in every
+  log line of the request, and CORS exposes it to the UI.
+- **Dashboards:** `docker compose --profile full --profile observability up -d --build` adds Prometheus
+  (<http://localhost:9090>) and Grafana (<http://localhost:3000>, anonymous read access) with the provisioned
+  **HR API** dashboard: request rate, error ratio, latency percentiles, responses by status, feedback and sentiment
+  outcomes, heap, GC, threads and DB connections ([`observability/`](observability)).
 
 ## Privacy and GDPR
 
-Feedback about colleagues is personal data, and sentiment scores derived from it can be used to assess
-people. The application is built to keep that to what the feature needs. This is a technical description,
-not legal advice.
+Feedback about colleagues is personal data, and sentiment scores derived from it can be used to assess people. The
+application is built to keep that to what the feature needs ([ADR 0003](docs/adr/0003-anonymous-feedback-privacy-by-design.md)).
+This is a technical description, not legal advice.
 
-- **Only free text is analysed.** The sentiment model only receives the text of the feedback message (no ids,
-  author, recipient or other employee data), once, when the feedback is created.
-- **Managers can switch the analysis off** (`PUT /settings`). While it is off, nothing is sent to Hugging Face
-  and new feedback is stored without sentiment. Without a configured token nothing is sent either.
+- **Only free text is analysed.** The sentiment model receives the text of the message (no ids, author, recipient or
+  other employee data), once, when the feedback is created.
+- **Managers can switch the analysis off** (`PUT /settings`). While it is off, or without a configured token, nothing
+  is sent to Hugging Face and new feedback is stored without sentiment.
 - **Anonymous feedback stays anonymous.** The author is stored only to enforce rules such as "no feedback to
   yourself"; the API never returns it to anybody but the author, managers included.
-- **Managers see aggregates and messages, not profiles.** The dashboard shows counts and shares; alerts only
-  say that the share of positive feedback about someone dropped, with no message content, and require a
-  minimum number of analysed items so a single message cannot trigger them.
-- **Data minimisation.** Employees only see their own received and sent feedback, and salary and address only
-  of their own record. Deleting an employee deletes the feedback about them and removes them as author of
-  what they wrote.
-- **Before real use**, note that in Germany a tool able to monitor employees' behaviour or performance is
-  subject to the works council's co-determination (§87(1) no. 6 BetrVG), and that a data protection impact
-  assessment (GDPR Art. 35) is advisable for automated analysis of employee feedback.
+- **Managers see aggregates and messages, not profiles.** Alerts only say that the share of positive feedback about
+  someone dropped, with no message content, and need at least 3 analysed items in each 30-day window.
+- **Data minimisation.** Employees only see their own received and sent feedback, and salary and address only of their
+  own record. Deleting an employee deletes the feedback about them and removes them as author of what they wrote.
+  Metrics and logs carry no feedback content.
+- **Before real use**, note that in Germany a tool able to monitor employees' behaviour or performance is subject to
+  the works council's co-determination (§87(1) no. 6 BetrVG), and that a data protection impact assessment
+  (GDPR Art. 35) is advisable for automated analysis of employee feedback.
 
-## Tests and coverage
+## Quality
 
 ```bash
-./mvnw verify                        # unit + Spring MockMvc tests, JaCoCo report
-./mvnw verify -Pintegration-tests    # additionally runs the Testcontainers integration tests (needs Docker)
+./mvnw verify                        # unit + Spring MockMvc tests, OpenAPI contract check, JaCoCo report
+./mvnw verify -Pintegration-tests    # plus the Testcontainers PostgreSQL integration tests (needs Docker)
 ```
 
-- **Unit tests** (JUnit 5 + Mockito, no Spring): the domain rules (update policy, dashboard aggregation with a
-  fixed clock: trend zero-fill, alert thresholds, top recognised), the use case services (visibility of
-  anonymous authors, sentiment gate) and the Hugging Face adapter (against a mocked HTTP server).
-- **Web tests** (`@SpringBootTest` + MockMvc, embedded H2 with the Flyway schema and the demo data, mocked JWTs):
-  every endpoint and the role matrix, the security configuration, e.g. unauthenticated requests get `401`.
-  Each test is rolled back.
-- **Integration tests** (`*IT`, Testcontainers PostgreSQL): the Flyway migrations, Hibernate schema validation,
-  the JPA adapters and queries, the demo data seeder, and the API on top of PostgreSQL.
+- **Unit tests** (no Spring): domain rules with a fixed clock (update policy, trend zero-fill, alert thresholds, top
+  recognised), use case services (anonymity, sentiment gate and its metrics), the Hugging Face adapter against a mock
+  HTTP server, the metrics adapter and the request id filter.
+- **Web tests** (`@SpringBootTest` + MockMvc, H2 with the Flyway schema and demo data, mocked JWTs): every endpoint and
+  the role matrix, CORS, statelessness, the Prometheus endpoint and the OpenAPI contract.
+- **Integration tests** (`*IT`, Testcontainers PostgreSQL): migrations, schema validation, JPA queries, the seeder and
+  the API on PostgreSQL.
+- **CI** ([`ci.yml`](.github/workflows/ci.yml)) runs all of them on every push and pull request, builds the Docker image
+  (no push) and, on `main`, publishes the coverage badge to the `badges` branch with the job's `GITHUB_TOKEN`
+  (a single force-pushed commit on an orphan branch, so `main` gets no bot commits and no workflow is re-triggered).
+- **CodeQL** ([`codeql.yml`](.github/workflows/codeql.yml)) scans the Java code on pushes, pull requests and weekly;
+  **Dependabot** groups weekly updates for Maven, GitHub Actions, the Dockerfile and the compose images.
 
-The coverage report is written to `target/site/jacoco/index.html`. CI runs
-`./mvnw -B verify -Pintegration-tests` on every push and pull request to `main`.
+The HTML coverage report is written to `target/site/jacoco/index.html` and uploaded as a CI artifact.
+
+## Decisions
+
+Architecture decision records live in [`docs/adr`](docs/adr): hexagonal architecture, Keycloak and JWT, privacy by
+design, Flyway and the demo seeder, sentiment analysis behind a port, and OpenAPI as the contract between repositories.
+Changes are listed in the [CHANGELOG](CHANGELOG.md).
 
 ## License
 

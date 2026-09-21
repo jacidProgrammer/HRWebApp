@@ -9,6 +9,8 @@ import dev.jacid.hrApplication.application.port.in.FeedbackUseCases;
 import dev.jacid.hrApplication.application.port.in.NewFeedback;
 import dev.jacid.hrApplication.application.port.out.CurrentUserProvider;
 import dev.jacid.hrApplication.application.port.out.EmployeeRepository;
+import dev.jacid.hrApplication.application.port.out.FeedbackMetrics.SentimentOutcome;
+import dev.jacid.hrApplication.application.port.out.FeedbackMetrics;
 import dev.jacid.hrApplication.application.port.out.FeedbackRepository;
 import dev.jacid.hrApplication.application.port.out.SentimentAnalyzer;
 import dev.jacid.hrApplication.application.port.out.SettingsRepository;
@@ -40,19 +42,22 @@ public class FeedbackServiceImpl implements FeedbackUseCases {
     private final SettingsRepository settingsRepository;
     private final CurrentUserProvider currentUserProvider;
     private final TimeProvider timeProvider;
+    private final FeedbackMetrics metrics;
 
     public FeedbackServiceImpl(EmployeeRepository employeeRepository,
                                FeedbackRepository feedbackRepository,
                                SentimentAnalyzer sentimentAnalyzer,
                                SettingsRepository settingsRepository,
                                CurrentUserProvider currentUserProvider,
-                               TimeProvider timeProvider) {
+                               TimeProvider timeProvider,
+                               FeedbackMetrics metrics) {
         this.employeeRepository = employeeRepository;
         this.feedbackRepository = feedbackRepository;
         this.sentimentAnalyzer = sentimentAnalyzer;
         this.settingsRepository = settingsRepository;
         this.currentUserProvider = currentUserProvider;
         this.timeProvider = timeProvider;
+        this.metrics = metrics;
     }
 
     /**
@@ -77,12 +82,27 @@ public class FeedbackServiceImpl implements FeedbackUseCases {
             throw new InvalidFeedbackException("You cannot send feedback to yourself");
         }
 
-        Sentiment sentiment = settingsRepository.load().sentimentAnalysisEnabled()
-                ? sentimentAnalyzer.analyze(message).orElse(null)
-                : null;
+        Sentiment sentiment = analyze(message);
 
-        return feedbackRepository.save(new Feedback(null, recipient, author, request.anonymous(), request.value(),
-                message, sentiment, timeProvider.now()));
+        Feedback saved = feedbackRepository.save(new Feedback(null, recipient, author, request.anonymous(),
+                request.value(), message, sentiment, timeProvider.now()));
+        metrics.feedbackCreated(saved);
+        return saved;
+    }
+
+    /** The sentiment of the message, or {@code null} when the analysis is switched off, not configured or failed. */
+    private Sentiment analyze(String message) {
+        if (!settingsRepository.load().sentimentAnalysisEnabled()) {
+            metrics.sentimentAnalysed(SentimentOutcome.DISABLED, null);
+            return null;
+        }
+        Sentiment sentiment = sentimentAnalyzer.analyze(message).orElse(null);
+        if (sentiment != null) {
+            metrics.sentimentAnalysed(SentimentOutcome.ANALYSED, sentiment.label());
+        } else {
+            metrics.sentimentAnalysed(sentimentAnalyzer.isAvailable() ? SentimentOutcome.FAILED : SentimentOutcome.UNAVAILABLE, null);
+        }
+        return sentiment;
     }
 
     @Override
