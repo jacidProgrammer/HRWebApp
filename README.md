@@ -3,11 +3,11 @@
 [![CI](https://github.com/jacidProgrammer/HRWebApp/actions/workflows/ci.yml/badge.svg)](https://github.com/jacidProgrammer/HRWebApp/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/jacidProgrammer/HRWebApp/actions/workflows/codeql.yml/badge.svg)](https://github.com/jacidProgrammer/HRWebApp/actions/workflows/codeql.yml)
 [![Coverage](https://raw.githubusercontent.com/jacidProgrammer/HRWebApp/badges/jacoco.svg)](https://github.com/jacidProgrammer/HRWebApp/actions/workflows/ci.yml)
-[![Java 21](https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/21/)
+[![Java 25](https://img.shields.io/badge/Java-25-007396?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/25/)
 [![Spring Boot 3.5](https://img.shields.io/badge/Spring%20Boot-3.5-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**A peer-recognition and HR-insights API with privacy built in: Spring Boot 3.5 on Java 21, hexagonal architecture,
+**A peer-recognition and HR-insights API with privacy built in: Spring Boot 3.5 on Java 25, hexagonal architecture,
 Keycloak-secured, with AI sentiment analysis that degrades gracefully.**
 
 Employees recognise colleagues (optionally anonymously) for company values; managers get a dashboard with trends and
@@ -150,7 +150,7 @@ sequenceDiagram
 
 ## Tech stack
 
-- Java 21, Spring Boot 3.5: Web, Security, OAuth2 Resource Server, Data JPA, Validation, Actuator
+- Java 25, Spring Boot 3.5: Web, Security, OAuth2 Resource Server, Data JPA, Validation, Actuator
 - Keycloak 26 (OIDC), PostgreSQL 15 (H2 for quick local runs), Flyway
 - MapStruct, Lombok, Spring `RestClient` for the Hugging Face inference API
 - springdoc-openapi, Micrometer + Prometheus, Grafana, ECS structured logging
@@ -159,7 +159,7 @@ sequenceDiagram
 
 ## Developing locally
 
-Requirements: JDK 21 and Docker. Maven comes with the wrapper (`./mvnw`).
+Requirements: JDK 25 and Docker. Maven comes with the wrapper (`./mvnw`).
 
 1. **Start Keycloak and the databases** (no profile: infrastructure only):
 
