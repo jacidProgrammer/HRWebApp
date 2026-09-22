@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- Build: compile and package with the Maven wrapper, then split the jar into layers ----
-FROM eclipse-temurin:21-jdk AS build
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /workspace
 
 # Dependencies first: this layer is reused until pom.xml or the wrapper change
@@ -15,7 +15,7 @@ RUN ./mvnw -B -q -DskipTests package \
  && java -Djarmode=tools -jar app.jar extract --layers --launcher --destination extracted
 
 # ---- Runtime: JRE only, non-root, one layer per Spring Boot jar layer (dependencies change least) ----
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:25-jre
 WORKDIR /app
 
 RUN groupadd --system --gid 10001 spring \
