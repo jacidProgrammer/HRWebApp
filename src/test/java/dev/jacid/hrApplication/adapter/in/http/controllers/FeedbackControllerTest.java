@@ -194,6 +194,16 @@ class FeedbackControllerTest {
     }
 
     @Test
+    void malformedJsonIs400() throws Exception {
+        mockMvc.perform(post("/feedback").with(employee("louisa"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"message\": "))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", is("BAD_REQUEST")))
+                .andExpect(jsonPath("$.message", is("Malformed JSON request body")));
+    }
+
+    @Test
     void unknownRecipientIs404() throws Exception {
         send("louisa", Map.of("recipientId", UUID.randomUUID(), "message", MESSAGE))
                 .andExpect(status().isNotFound());

@@ -46,7 +46,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> handleUnreadableBody(HttpMessageNotReadableException ex) {
+    public ResponseEntity<ErrorResponse> handleUnreadableBody() {
         return error(HttpStatus.BAD_REQUEST, "Malformed JSON request body");
     }
 
