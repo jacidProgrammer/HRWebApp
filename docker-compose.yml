@@ -12,7 +12,7 @@ name: hrwebapp
 
 services:
   login-postgres:
-    image: postgres:15-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
@@ -28,7 +28,7 @@ services:
       retries: 5
 
   hrapp-postgres:
-    image: postgres:15-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_DB: hrApplication
       POSTGRES_USER: hrApplication
@@ -44,7 +44,7 @@ services:
       retries: 5
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.7.4
+    image: quay.io/keycloak/keycloak:26.8.0
     # start-dev: HTTP, no hostname configuration; the issuer follows the URL used to reach Keycloak
     # (http://localhost:8082/realms/hr-realm). --import-realm imports the realm when it does not exist yet.
     command:
@@ -126,7 +126,7 @@ services:
   # ---- profile "observability": Prometheus and Grafana (scrape the api service of the "full" profile) ----
   prometheus:
     profiles: [observability]
-    image: prom/prometheus:v3.14.0
+    image: prom/prometheus:v3.15.0
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.retention.time=7d
@@ -137,7 +137,7 @@ services:
 
   grafana:
     profiles: [observability]
-    image: grafana/grafana:13.2.2
+    image: grafana/grafana:13.2.3
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
