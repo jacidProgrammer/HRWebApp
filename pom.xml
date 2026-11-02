@@ -30,7 +30,7 @@
     <properties>
         <java.version>25</java.version>
         <mapstruct.version>1.6.3</mapstruct.version>
-        <jacoco.version>0.8.15</jacoco.version>
+        <jacoco.version>0.8.16</jacoco.version>
         <!-- 1.21.4+ is required for Docker Engine 29 (Boot 3.5.8 manages 1.21.3) -->
         <testcontainers.version>1.21.4</testcontainers.version>
     </properties>
@@ -79,7 +79,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.13</version>
+            <version>42.7.14</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
